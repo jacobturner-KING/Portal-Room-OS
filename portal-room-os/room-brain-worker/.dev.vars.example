@@ -1,6 +1,5 @@
 # Copy to .dev.vars for local `wrangler dev`, and set the same keys in production with:
 #   wrangler secret put <NAME>
-# None of these are committed. .dev.vars is gitignored.
 
 # Bearer token the Portal app sends on every /api request.
 APP_TOKEN="change-me-portal-token"
@@ -28,10 +27,9 @@ HA_TOKEN=""
 # OneBusAway Puget Sound API key for the Transit screen (optional; "TEST" is used otherwise)
 OBA_API_KEY=""
 
-# Transit screen: which terminals, stops and routes to show. Everything
-# location-specific lives here rather than in source, so a checkout carries no
-# one's home town. Leave it unset and the Transit screen simply says it is not
-# configured. One line of JSON; single quotes so the inner quotes survive.
+# Transit screen: which terminals, stops and routes to show. Leave it unset and
+# the Transit screen simply says it is not configured. One line of JSON; single
+# quotes so the inner quotes survive.
 #
 #   title       the screen's heading
 #   terminals   WSDOT terminal id -> the name to show

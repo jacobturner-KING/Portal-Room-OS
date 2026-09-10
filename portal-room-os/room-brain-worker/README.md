@@ -22,7 +22,7 @@ a credential.
 | `GET /auth/{spotify,google}/start` | admin cookie | Begins OAuth |
 | `GET /auth/{spotify,google}/callback` | state param | OAuth return |
 
-## Secrets (never committed)
+## Secrets and configuration
 
 Local dev reads `.dev.vars`. Production uses `wrangler secret put <NAME>`:
 
@@ -53,10 +53,9 @@ wrangler deploy
 wrangler types                                    # regenerate Env after config changes
 ```
 
-The committed `wrangler.jsonc` carries no account ids, so it ships the KV
-namespace id as a placeholder. Either paste yours in (and keep it out of any
-commit), or copy the file to `wrangler.local.jsonc`, which is gitignored, put the
-real id there and deploy with `wrangler deploy --config wrangler.local.jsonc`.
+`wrangler.jsonc` has no KV namespace id filled in. Copy it to
+`wrangler.local.jsonc`, put yours there, and deploy with
+`wrangler deploy --config wrangler.local.jsonc`.
 
 After deploy you get the Worker URL, e.g. `https://portal-room-brain.<subdomain>.workers.dev`.
 Set these as the redirect URIs in each provider's dashboard:
@@ -70,7 +69,7 @@ and link the accounts.
 ## Wire the Portal to it
 
 The app reads both the Worker URL and the bearer token from `local.properties`
-in `portal-room-os/`, which is gitignored, and they reach `Config.java` as
+in `portal-room-os/`, and they reach `Config.java` as
 `BuildConfig` fields:
 
 ```

@@ -5,10 +5,10 @@
 //   Water taxi  A passenger-only route via OneBusAway Puget Sound.
 //   Buses       Real-time arrivals for the configured stops, via OneBusAway.
 //
-// Which terminals, stops and routes those are is deliberately not in this file:
-// it comes from the TRANSIT_CONFIG value, so a checkout carries nobody's home
-// town. See .dev.vars.example for the shape. With none set, /api/transit answers
-// `configured: false` and the screen says so rather than showing an empty board.
+// Which terminals, stops and routes those are comes from the TRANSIT_CONFIG
+// value, so the same code serves any route. See .dev.vars.example for the
+// shape. With none set, /api/transit answers `configured: false` and the screen
+// says so rather than showing an empty board.
 //
 // OneBusAway's documented "TEST" key is used until OBA_API_KEY is set. Everything
 // is merged into one /api/transit response, cached for 40 s so the Portal's
@@ -78,7 +78,7 @@ function configured(cfg: TransitConfig): boolean {
 }
 
 /** The label the Portal shows above a stop's arrivals, built here so the app
- *  carries no place names of its own. */
+ *  needs no knowledge of the route. */
 function stopLabel(cfg: TransitConfig, name: string, direction: string): string {
   let label = name;
   for (const rule of cfg.bus.rename) {

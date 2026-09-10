@@ -25,10 +25,8 @@
     // Home Assistant (needs HA_URL + HA_TOKEN secrets): entities for the dashboard
     // home line, and the one the Lights button toggles, e.g. "light.living_room".
     "HA_SUMMARY_ENTITIES": "",
-    "HA_LIGHT_ENTITY": "",
-    // Transit is configured by the TRANSIT_CONFIG value, not here, so this file
-    // names no terminal, stop or town. See .dev.vars.example for its shape and
-    // set it with: wrangler secret put TRANSIT_CONFIG
-    "TRANSIT_PLACEHOLDER": ""
+    "HA_LIGHT_ENTITY": ""
+    // Transit is configured by the TRANSIT_CONFIG secret; see .dev.vars.example
+    // for its shape and set it with: wrangler secret put TRANSIT_CONFIG
   }
 }

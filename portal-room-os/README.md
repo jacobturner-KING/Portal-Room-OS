@@ -31,11 +31,10 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   `TEST` key until `OBA_API_KEY` is set; the shared key throttles bursts, so an
   occasional "live data unavailable" line is expected).
 
-  Which terminals, stops and routes it shows is not in the source. It comes from
-  the Worker's `TRANSIT_CONFIG` value, so a checkout carries nobody's home town,
-  and the screen adapts to whoever sets it: even the title and each stop's label
-  arrive with the data. Unset, the screen says it is not configured. The shape is
-  documented in `room-brain-worker/.dev.vars.example`.
+  Which terminals, stops and routes it shows comes from the Worker's
+  `TRANSIT_CONFIG` value, so the same screen serves any route: even the title
+  and each stop's label arrive with the data. Unset, the screen says it is not
+  configured. The shape is documented in `room-brain-worker/.dev.vars.example`.
 - Timer (`TimerActivity`, Timer button): a Pomodoro focus timer and a stopwatch
   behind one mode switch, sharing a hand-drawn radial dial (`TimerProgressView`,
   a plain `View` with an `onDraw` arc). The Pomodoro runs 25/5, 50/10 or a
@@ -134,7 +133,6 @@ app/                    Android app (package com.portalroomos, no AndroidX)
   src/main/res/drawable-nodpi/portal_background.png   wall photo, 1280x800
 tools/contrast_check.py WCAG AAA gate for the palette over that photo.
 room-brain-worker/      Cloudflare Worker (TypeScript). See its README for endpoints.
-room-brain/             Retired FastAPI mock, kept for offline experiments only.
 docs/                   Product spec and architecture.
 ```
 
@@ -187,16 +185,14 @@ The Gradle wrapper is pinned to 8.9 (system Gradle 9.x is too new for AGP 8.5.2)
 Always install with `adb install`; the on-device installer dialog is broken
 (white on white).
 
-`local.properties` (gitignored) must hold the SDK path, your Worker's URL, and
-the app's bearer token, the same value as `APP_TOKEN` in the Worker's
-`.dev.vars`:
+`local.properties` holds the SDK path, your Worker's URL, and the app's bearer
+token, the same value as `APP_TOKEN` on the Worker:
 ```
 sdk.dir=/opt/homebrew/share/android-commandlinetools
 roomBrain.url=https://portal-room-brain.<subdomain>.workers.dev
 roomBrain.appToken=<APP_TOKEN>
 ```
-Neither is committed: both reach `Config.java` as `BuildConfig` fields, because
-the Worker hostname carries the Cloudflare account subdomain.
+Both reach `Config.java` as `BuildConfig` fields.
 
 Watch the speaker: `adb -s $PORTAL logcat -s Librespot`. While audio
 flows it logs a line every 30 s with seconds streamed and the underrun delta
@@ -291,13 +287,11 @@ cd room-brain-worker
 npx tsc --noEmit        # keep clean; ambient Env lives in src/env.d.ts
 npx wrangler deploy --config wrangler.local.jsonc
 ```
-`wrangler.jsonc` is committed with no account ids in it, so the KV namespace id
-is a placeholder. Keep your real one in `wrangler.local.jsonc`, which is
-gitignored, and deploy with `--config` as above; plain `npx wrangler deploy`
-works too if you paste the id straight in and never commit it. First deploy:
-`wrangler kv namespace create ROOM_KV` prints that id. Secrets are set with
-`wrangler secret put` and mirrored in the gitignored `.dev.vars`, including the
-optional `TRANSIT_CONFIG` that drives the Transit screen. Link or re-link accounts at
+First deploy: `wrangler kv namespace create ROOM_KV` prints a namespace id.
+Copy `wrangler.jsonc` to `wrangler.local.jsonc`, put the id there, and deploy
+with `--config` as above. Secrets are set with `wrangler secret put` and
+mirrored in `.dev.vars` for local development, including the optional
+`TRANSIT_CONFIG` that drives the Transit screen. Link or re-link accounts at
 `<worker>/connect?admin=<ADMIN_TOKEN>`.
 
 ## Gotchas
@@ -387,7 +381,7 @@ Things that cost time here, so they do not cost you any.
   unavailable" line on the transit screen is normal until you set `OBA_API_KEY`.
 - `TRANSIT_CONFIG` is not optional if you want the transit screen: with none set,
   `/api/transit` answers `configured: false` and the screen says so.
-- `wrangler.jsonc` ships the KV namespace id as a placeholder, so a plain
+- `wrangler.jsonc` has no KV namespace id filled in, so a plain
   `wrangler deploy` binds nothing useful. See the Worker section above.
 
 ## Optional integrations

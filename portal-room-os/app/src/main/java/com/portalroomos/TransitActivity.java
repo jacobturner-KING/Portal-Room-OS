@@ -20,8 +20,8 @@ import java.util.Locale;
 /**
  * Transit board: ferries both ways with live vessel status, a passenger-only
  * water taxi, and live bus arrivals. Which terminals, stops and routes those are
- * is configured on the Worker, not here, so this screen carries no place names of
- * its own: even the title and each stop's label arrive with the data. All of it
+ * is configured on the Worker, so this screen needs no knowledge of the route:
+ * even the title and each stop's label arrive with the data. All of it
  * comes from the Room Brain's /api/transit; this screen renders and polls every
  * minute.
  */

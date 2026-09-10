@@ -16,12 +16,12 @@ node_modules/
 worker-configuration.d.ts
 dist/
 
-# Python mock server
+# Python (tools/)
 .venv/
 __pycache__/
 *.pyc
 
-# Secrets: never commit
+# Local secrets
 .dev.vars
 *.keystore
 *.jks

@@ -3,7 +3,7 @@ plugins {
 }
 
 // The Room Brain bearer token is a secret and stays out of source control:
-// put `roomBrain.appToken=<APP_TOKEN>` in local.properties (gitignored), or export
+// put `roomBrain.appToken=<APP_TOKEN>` in local.properties, or export
 // ROOM_BRAIN_APP_TOKEN. It reaches the app as BuildConfig.ROOM_BRAIN_APP_TOKEN.
 def localProps = new Properties()
 def localPropsFile = rootProject.file('local.properties')

@@ -8,6 +8,6 @@ controller, and its own Spotify Connect speaker, driven by a Cloudflare Worker
   runbook (`portal-room-os/README.md`) with build, deploy, and device notes.
 - `Portal Background.png` — wallpaper asset for the dashboard.
 
-Secrets never live in this repo: the Worker reads `.dev.vars` (gitignored) and
-`wrangler secret put`; the app reads its bearer token from `local.properties`
-(gitignored). See the runbook for both.
+Configuration is local to each install: the Worker reads `.dev.vars` in
+development and `wrangler secret put` in production, and the app reads
+`local.properties`. The runbook covers both.
