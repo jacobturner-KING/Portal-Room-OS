@@ -230,7 +230,8 @@
         <Button android:id="@+id/calendarBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="10dp" android:background="@drawable/button_bg" android:text="Calendar" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
         <Button android:id="@+id/transitBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="10dp" android:background="@drawable/button_bg" android:text="Transit" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
         <Button android:id="@+id/timerBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="10dp" android:background="@drawable/button_bg" android:text="Timer" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
-        <Button android:id="@+id/add" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginStart="10dp" android:background="@drawable/button_bg" android:text="Add" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
+        <Button android:id="@+id/add" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="10dp" android:background="@drawable/button_bg" android:text="Add" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
+        <Button android:id="@+id/portalBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginStart="10dp" android:background="@drawable/button_bg" android:text="Portal" android:textColor="@color/muted" android:textSize="18sp" android:textAllCaps="false" />
     </LinearLayout>
 
     <TextView

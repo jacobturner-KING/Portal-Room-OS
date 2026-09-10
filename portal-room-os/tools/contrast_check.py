@@ -242,6 +242,7 @@ ELEMENTS = [
     ("dashboard", "button labels",      "text",    18, False, "button"),
     ("dashboard", "button labels down", "text",    18, False, "button_down"),
     ("dashboard", "status line",        "muted",   13, False, "chip"),
+    ("dashboard", "portal button",      "muted",   18, False, "button"),
     ("dashboard", "timer phase focus",  "amber",   13, True,  "panel"),
     ("dashboard", "timer phase break",  "success", 13, True,  "panel"),
     ("dashboard", "timer phase paused", "muted",   13, True,  "panel"),

@@ -1,6 +1,8 @@
 package com.portalroomos;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -51,21 +53,29 @@ public class MainActivity extends Activity {
         bindAction(R.id.voice, "voice");
         bindAction(R.id.lights, "toggle_lights");
         findViewById(R.id.musicBtn).setOnClickListener(v ->
-            startActivity(new android.content.Intent(this, MusicActivity.class)));
+            startActivity(new Intent(this, MusicActivity.class)));
         bindAction(R.id.add, "add_item");
         View.OnClickListener openCalendar = v ->
-            startActivity(new android.content.Intent(this, CalendarActivity.class));
+            startActivity(new Intent(this, CalendarActivity.class));
         findViewById(R.id.calendarBtn).setOnClickListener(openCalendar);
         nextEvent.setOnClickListener(openCalendar);
         findViewById(R.id.transitBtn).setOnClickListener(v ->
-            startActivity(new android.content.Intent(this, TransitActivity.class)));
+            startActivity(new Intent(this, TransitActivity.class)));
         View.OnClickListener openTimer = v ->
-            startActivity(new android.content.Intent(this, TimerActivity.class));
+            startActivity(new Intent(this, TimerActivity.class));
         findViewById(R.id.timerBtn).setOnClickListener(openTimer);
         timerCard.setOnClickListener(openTimer);
 
+        // Room OS offers itself as a home screen, so it needs a way back to the
+        // stock launcher for the Portal's own features. Hidden if there is no
+        // other home to go to.
+        Intent stock = stockHome();
+        View portalBtn = findViewById(R.id.portalBtn);
+        if (stock == null) portalBtn.setVisibility(View.GONE);
+        else portalBtn.setOnClickListener(v -> startActivity(stock));
+
         // Start the on-device Spotify Connect receiver ("Portal").
-        startForegroundService(new android.content.Intent(this, LibrespotService.class));
+        startForegroundService(new Intent(this, LibrespotService.class));
 
         SingingBowl.shared().prepareAsync();
     }
@@ -114,6 +124,23 @@ public class MainActivity extends Activity {
         timerName.setText(timer.sessionName.isEmpty()
                 ? timer.presetName() + " · " + timer.focusMin() + " / " + timer.breakMin()
                 : timer.sessionName);
+    }
+
+    /**
+     * The device's own home screen, whichever it is: every home activity except
+     * ours. Resolved rather than hard-coded so this is not tied to one launcher.
+     */
+    private Intent stockHome() {
+        Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+        for (ResolveInfo ri : getPackageManager().queryIntentActivities(home, 0)) {
+            if (ri.activityInfo == null) continue;
+            if (getPackageName().equals(ri.activityInfo.packageName)) continue;
+            Intent go = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+            go.setClassName(ri.activityInfo.packageName, ri.activityInfo.name);
+            go.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            return go;
+        }
+        return null;
     }
 
     private void bindAction(int id, String action) {

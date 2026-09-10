@@ -7,9 +7,11 @@ import android.os.Build;
 import android.util.Log;
 
 /**
- * Brings the Spotify Connect speaker up at boot, so "Portal" is available even
- * before anyone opens the dashboard. Room OS is not (yet) the launcher, so this
- * is the only thing that runs on a cold start.
+ * Brings the room up at boot: the Spotify Connect speaker, so "Portal" is
+ * available before anyone touches the screen, and the dashboard itself, so a
+ * wall panel that has been unplugged comes back showing the room rather than the
+ * stock launcher. Starting an activity from BOOT_COMPLETED is allowed on API 28;
+ * the background-start restrictions arrived in API 29.
  */
 public class BootReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context context, Intent intent) {
@@ -18,5 +20,9 @@ public class BootReceiver extends BroadcastReceiver {
         Intent svc = new Intent(context, LibrespotService.class);
         if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(svc);
         else context.startService(svc);
+
+        Intent dash = new Intent(context, MainActivity.class);
+        dash.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(dash);
     }
 }

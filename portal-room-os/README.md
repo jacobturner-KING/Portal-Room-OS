@@ -13,7 +13,8 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   / Add buttons. A running Pomodoro shows as a card at the top of the right
   column, with its ring, phase, remaining time and session name, sized to read
   from across the room; tap it to open the timer screen. The card is only there
-  when a timer is going, so an idle dashboard stays clean.
+  when a timer is going, so an idle dashboard stays clean. The Portal button hands
+  back to the stock launcher for the device's own features; see Home screen.
 - Spotify controller (`MusicActivity`): search, playlists, transport, album art,
   and a device picker.
 - Calendar (`CalendarActivity`, from the Calendar button or the NEXT card): day,
@@ -198,6 +199,31 @@ Three things set how loud the Portal is, in order:
 - Account setup only completed on a non-home Wi-Fi (Facebook "unknown error (1)"
   and WhatsApp "can't link" on the home network).
 
+## Home screen
+The Portal's own launcher lists only Facebook's apps (Contacts, App Store,
+Browser, Settings, Help). It does not enumerate installed apps, so a sideloaded
+one cannot put an icon there however it declares itself, and the device has no
+notification shade or recents switcher to reach it another way. Three things
+close that gap instead:
+
+- `BootReceiver` starts the dashboard as well as the speaker, so a panel that
+  has been unplugged comes back showing the room. Starting an activity from
+  `BOOT_COMPLETED` is allowed on API 28; the restrictions arrived in API 29.
+- `MainActivity` also registers `category.HOME`, so Room OS offers itself as a
+  home screen. Adding that seizes nothing: with two home apps and no default,
+  the Home key shows Android's chooser. Pick Room OS and **Always** to make it
+  the face of the device, or **Just once** to leave the choice open.
+- The dashboard's **Portal** button goes back to the stock launcher. It resolves
+  every home activity except our own rather than naming a package, so it is not
+  tied to one launcher, and hides itself if there is no other home to go to.
+
+To undo: Settings → Apps → Default apps → Home, or over adb
+`adb -s $PORTAL shell cmd package set-home-activity <package>/<activity>`.
+Worth knowing before you choose **Always**: if Room OS is the default home and it
+ever fails to start, the Home key has nowhere friendly to land and you will need
+adb to get back. The Portal button is the in-app escape hatch for everything short
+of that.
+
 ## Rebuild librespot (only if needed)
 Clone `https://github.com/librespot-org/librespot` at `v0.8.0`, then with
 `. $HOME/.cargo/env`, `ANDROID_HOME` set and CC/linker pointed at NDK
@@ -337,7 +363,6 @@ Google linked. These fill in the rest:
    so a finished Pomodoro is heard even from the calendar or transit screens.
    The dashboard and the timer screen already ring.
 2. Presence (wake on approach), push-to-talk voice.
-3. Make Room OS the default launcher (last).
 
 Transit implementation notes (for later changes): terminal ids come from WSDOT's
 `terminals/rest/terminalbasics`, and OneBusAway stop ids are the tail of a stop's
