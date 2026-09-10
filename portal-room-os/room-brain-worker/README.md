@@ -69,10 +69,17 @@ and link the accounts.
 
 ## Wire the Portal to it
 
-In the Android app, set `ROOM_BRAIN_URL` to the Worker URL and send
-`Authorization: Bearer <APP_TOKEN>` on each request, then rebuild and install
-over Wi-Fi. (The app currently points at the LAN dev server and sends no token;
-that change lands when we cut over.)
+The app reads both the Worker URL and the bearer token from `local.properties`
+in `portal-room-os/`, which is gitignored, and they reach `Config.java` as
+`BuildConfig` fields:
+
+```
+roomBrain.url=https://portal-room-brain.<subdomain>.workers.dev
+roomBrain.appToken=<the same APP_TOKEN this Worker has>
+```
+
+Every `/api` request then carries `Authorization: Bearer <APP_TOKEN>`. Rebuild
+and install after changing either.
 
 ## Local dev
 

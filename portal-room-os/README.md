@@ -14,7 +14,8 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   column, with its ring, phase, remaining time and session name, sized to read
   from across the room; tap it to open the timer screen. The card is only there
   when a timer is going, so an idle dashboard stays clean. The Portal button hands
-  back to the stock launcher for the device's own features; see Home screen.
+  back to the stock launcher for the device's own features; see Getting to the
+  dashboard.
 - Spotify controller (`MusicActivity`): search, playlists, transport, album art,
   and a device picker.
 - Calendar (`CalendarActivity`, from the Calendar button or the NEXT card): day,
@@ -136,6 +137,37 @@ room-brain-worker/      Cloudflare Worker (TypeScript). See its README for endpo
 room-brain/             Retired FastAPI mock, kept for offline experiments only.
 docs/                   Product spec and architecture.
 ```
+
+## Start here
+Roughly two evenings from a boxed Portal to the dashboard on the wall.
+
+You need a first-generation Portal (10", 2018, codename `aloha`), a Mac or Linux
+box with `adb`, JDK 17 and the Android command line tools, Node and npm for the
+Worker, a Cloudflare account (the free tier is enough), and **Spotify Premium**:
+Connect refuses to hand a speaker to a free account, so the audio half simply
+will not work without it. Google Calendar and Home Assistant are optional.
+
+Do it in this order. The app is useless before the Worker exists, because it
+needs the Worker's URL and token at build time.
+
+1. **The Portal.** Complete Facebook's first-run setup, then enable ADB under
+   Settings → Debug. See Device access. Some networks refuse account setup; if
+   you hit that, try another Wi-Fi.
+2. **The Worker.** `room-brain-worker/README.md`, First deploy. `APP_TOKEN` and
+   `ADMIN_TOKEN` are not issued by anyone: invent two long random strings, they
+   are just shared secrets between you, the Worker and the app. Note the Worker
+   URL it prints.
+3. **Link the accounts** at `<worker>/connect?admin=<ADMIN_TOKEN>`, after adding
+   the redirect URIs to your Spotify and Google apps. Publish the Google consent
+   screen or the calendar stops loading weekly; see Gotchas.
+4. **Build and install the app** with the Worker URL and `APP_TOKEN` in
+   `local.properties`, below.
+5. **Grant the overlay** so the OS chip can float over the stock launcher, and
+   sign the speaker in for the first time. Both are in Getting to the dashboard
+   and Gotchas respectively.
+6. **Optional:** `TRANSIT_CONFIG` for the transit board, Home Assistant for the
+   home line and the Lights button, Major Key for the focus line. See Optional
+   integrations.
 
 ## Build and deploy the app
 `$PORTAL` below is your Portal's adb address: the serial from `adb devices` over
