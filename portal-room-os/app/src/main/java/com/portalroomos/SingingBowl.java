@@ -50,10 +50,13 @@ final class SingingBowl {
     private static final double PEAK = 0.82;
     /**
      * Playback gain, applied by the track rather than baked into the samples so
-     * the waveform keeps its full resolution. 0.5 is half amplitude, about 6 dB
-     * below the media stream it rides on. Raise toward 1.0 for a louder bell.
+     * the waveform keeps its full resolution. 0.25 is a quarter amplitude, about
+     * 12 dB below the media stream it rides on, which is deliberately quiet: the
+     * stream is pinned to maximum for the speaker, so a bell at full scale in a
+     * quiet room is alarming rather than pleasant. Raise toward 1.0 for a louder
+     * bell; tools/bowl_preview.py folds the same figure in.
      */
-    static final float VOLUME = 0.5f;
+    static final float VOLUME = 0.25f;
 
     private volatile short[] sample;
     private AudioTrack track;

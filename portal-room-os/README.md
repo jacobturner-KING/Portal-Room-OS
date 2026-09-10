@@ -54,10 +54,11 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   `tools/bowl_preview.py` parses those constants straight out of the Java and
   renders the same waveform to a WAV, so the tone can be auditioned on a laptop
   and cannot drift from what the Portal plays. It comes out of the media stream,
-  so it follows the same volume as music, and rides it at half amplitude
-  (`SingingBowl.VOLUME`, 0.5, about 6 dB down) because a bell at full scale on a
-  stream librespot pins to maximum is startling. Raise that toward 1.0 for a
-  louder bell; the preview folds the same figure in, so it stays honest.
+  so it follows the same volume as music, and rides it at a quarter amplitude
+  (`SingingBowl.VOLUME`, 0.25, about 12 dB down) because the stream is pinned to
+  maximum for the speaker, and a bell at full scale in a quiet room is alarming
+  rather than pleasant. Raise that toward 1.0 for a louder bell; the preview folds
+  the same figure in, so it stays honest.
 
   Picking an interval mid-session queues it rather than tearing down the run.
 
@@ -172,7 +173,12 @@ flows it logs a line every 30 s with seconds streamed and the underrun delta
 ### Loudness
 Three things set how loud the Portal is, in order:
 1. The Spotify app's volume slider for "Portal" (librespot softvol, cubic curve).
-   Push it to 100% for maximum output.
+   Push it to 100% for maximum output. A fresh install starts at 25%
+   (`LibrespotService.DEFAULT_VOLUME_PCT`) rather than full, so the first thing
+   you play does not blast the room. That is only a default: librespot caches the
+   last volume in `files/librespot/volume` and the cache wins on every later
+   start, so turning it up in Spotify sticks. Delete that file to get the default
+   back. The timer's bell is separate, at `SingingBowl.VOLUME` (0.25).
 2. Android's media stream. The service pins it to max whenever audio starts.
 3. A LoudnessEnhancer gain stage (limiter-backed, default +8 dB) on the
    AudioTrack. Tune it live, no rebuild, 0 to 20 dB; the value persists:
@@ -242,6 +248,34 @@ Things that cost time here, so they do not cost you any.
   empty. Uninstall the old package afterwards or two builds will both advertise
   themselves as "Portal".
 
+**Spotify Connect, and the credential blob it all hangs on**
+- Zeroconf login cannot work on this device. Android's hostname is `localhost`,
+  libmdns advertises exactly that, so every Spotify client that discovers "Portal"
+  resolves it to itself and gives up. `setprop net.hostname` is blocked by SELinux,
+  so there is no fix without root. Confirm it with
+  `dns-sd -L Portal _spotify-connect._tcp local.`: a working device answers with a
+  real hostname, this one answers `localhost.local.`.
+- librespot 0.8.0's `--enable-oauth` fallback is also dead. Its built-in client
+  redirects to `http://127.0.0.1:5588/login`, which Spotify now rejects with
+  "redirect_uri: Not matching configuration", and this build has no `--client-id`
+  to point at your own app.
+- So everything rests on the cached `files/librespot/credentials.json`. With it,
+  librespot authenticates outbound and "Portal" appears account-wide, no discovery
+  involved. Without it there is no way in on the device itself. Anything that
+  clears app data takes it, including changing the app id.
+- Recovery. The blob is bound to the account, not the machine, so borrow a host
+  whose hostname does resolve:
+  ```bash
+  librespot -n "Portal Setup" -B pipe --system-cache /tmp/lscache --cache /tmp/lscache
+  ```
+  Pick "Portal Setup" in Spotify on the same network, which writes
+  `/tmp/lscache/credentials.json`, then move it across and restart the app:
+  ```bash
+  adb -s $PORTAL shell "run-as com.portalroomos sh -c 'cat > files/librespot/credentials.json'" < /tmp/lscache/credentials.json
+  ```
+  `adb logcat -s Librespot` then shows `Authenticated as`. Use the same librespot
+  version at both ends.
+
 **Drawing over the photo**
 - Never carry state with `View.setAlpha()`. Fading a whole control composites its
   label toward the photograph and drops the contrast below AAA. Say it in colour
@@ -264,7 +298,8 @@ Things that cost time here, so they do not cost you any.
   go through `TimerState`, not keep its own copy.
 - The bell rides the media stream, which `LibrespotService` pins to maximum
   whenever audio starts, so a bell normalised to full scale is startling. It plays
-  at `SingingBowl.VOLUME` (0.5).
+  at `SingingBowl.VOLUME` (0.25), and a fresh install starts Spotify's own slider
+  at 25% too.
 - Nothing runs in the background. A phase that ends while the calendar, transit or
   music screen is up is picked up silently on return; only the dashboard and the
   timer screen ring.

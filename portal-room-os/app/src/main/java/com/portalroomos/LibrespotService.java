@@ -47,6 +47,13 @@ public class LibrespotService extends Service {
     private static final String PREFS = "librespot";
     private static final String PREF_GAIN_DB = "gain_db";
     private static final int DEFAULT_GAIN_DB = 8;
+    /**
+     * Where the Spotify slider for "Portal" starts on a fresh install, as a
+     * percentage. Only a default: librespot caches the last volume in its system
+     * cache and that wins on every later start, so turning it up in Spotify
+     * sticks. Delete `files/librespot/volume` to fall back to this again.
+     */
+    private static final int DEFAULT_VOLUME_PCT = 25;
     private static final int MAX_GAIN_DB = 20;
 
     private volatile boolean running = false;
@@ -118,9 +125,9 @@ public class LibrespotService extends Service {
                     "-B", "pipe",
                     "--bitrate", "320",
                     // Cubic curve: the Spotify slider's middle is ~10 dB louder than
-                    // with the default log curve. First-ever run starts at full volume.
+                    // with the default log curve.
                     "--volume-ctrl", "cubic",
-                    "--initial-volume", "100",
+                    "--initial-volume", String.valueOf(DEFAULT_VOLUME_PCT),
                     "--system-cache", systemCache.getAbsolutePath(),
                     "--cache", audioCache.getAbsolutePath(),
                     "--cache-size-limit", "1G");
