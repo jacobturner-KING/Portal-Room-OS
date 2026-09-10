@@ -80,10 +80,10 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   or music screen is picked up silently on return rather than sounding.
 
 - On-device audio (`LibrespotService`): a bundled Rust librespot 0.8.0 binary
-  advertises the Portal as Connect device **"Portal"** and plays through the
+  advertises the Portal as Connect device **"Room OS"** and plays through the
   Portal's speaker. Verified underrun-free with a 1 s AudioTrack buffer.
   Credentials persist in the app's files dir, so it logs back in on every
-  start and "Portal" stays in the Spotify device list. `BootReceiver` starts the
+  start and "Room OS" stays in the Spotify device list. `BootReceiver` starts the
   service at boot.
 - Room Brain Worker: your own `https://portal-room-brain.<subdomain>.workers.dev`
   (Spotify, Google Calendar, Open-Meteo weather auto-located from the Portal's
@@ -177,7 +177,7 @@ Three things set how loud the Portal is, in order:
    made the on-screen indicator and the physical control jump to full on every
    sound and silently overrode whatever the room was set to. Don't reintroduce
    that: this is the control the person in the room reaches for.
-2. The Spotify app's volume slider for "Portal" (librespot softvol, cubic curve),
+2. The Spotify app's volume slider for "Room OS" (librespot softvol, cubic curve),
    riding underneath. A fresh install starts at `DEFAULT_VOLUME_PCT` (100), but
    librespot caches the last volume in `files/librespot/volume` and the cache wins
    on every later start, so what you set in Spotify sticks. Delete that file to
@@ -194,7 +194,7 @@ Three things set how loud the Portal is, in order:
 - ADB is enabled under Settings → Debug. `adb devices` gives the serial.
 - USB always works. Wi-Fi ADB is `adb connect <portal-ip>:5555`, armed with
   `adb tcpip 5555` over USB. It drops on every Portal reboot; re-cable to re-arm.
-- The Portal must be on the same Wi-Fi as the phones that should see "Portal".
+- The Portal must be on the same Wi-Fi as the phones that should see "Room OS".
   The Worker is public, so the dashboard works from any network.
 - Account setup only completed on a non-home Wi-Fi (Facebook "unknown error (1)"
   and WhatsApp "can't link" on the home network).
@@ -288,24 +288,24 @@ Things that cost time here, so they do not cost you any.
 
 **Changing the app id**
 - It gives the app a new data directory. The librespot credential cache goes with
-  it, so "Portal" stops appearing in Spotify until you pick it once from a client
+  it, so "Room OS" stops appearing in Spotify until you pick it once from a client
   on the same Wi-Fi, and the timer's session history and distraction log start
   empty. Uninstall the old package afterwards or two builds will both advertise
-  themselves as "Portal".
+  themselves as "Room OS".
 
 **Spotify Connect, and the credential blob it all hangs on**
 - Zeroconf login cannot work on this device. Android's hostname is `localhost`,
-  libmdns advertises exactly that, so every Spotify client that discovers "Portal"
+  libmdns advertises exactly that, so every Spotify client that discovers "Room OS"
   resolves it to itself and gives up. `setprop net.hostname` is blocked by SELinux,
   so there is no fix without root. Confirm it with
-  `dns-sd -L Portal _spotify-connect._tcp local.`: a working device answers with a
+  `dns-sd -L "Room OS" _spotify-connect._tcp local.`: a working device answers with a
   real hostname, this one answers `localhost.local.`.
 - librespot 0.8.0's `--enable-oauth` fallback is also dead. Its built-in client
   redirects to `http://127.0.0.1:5588/login`, which Spotify now rejects with
   "redirect_uri: Not matching configuration", and this build has no `--client-id`
   to point at your own app.
 - So everything rests on the cached `files/librespot/credentials.json`. With it,
-  librespot authenticates outbound and "Portal" appears account-wide, no discovery
+  librespot authenticates outbound and "Room OS" appears account-wide, no discovery
   involved. Without it there is no way in on the device itself. Anything that
   clears app data takes it, including changing the app id.
 - Recovery. The blob is bound to the account, not the machine, so borrow a host

@@ -33,7 +33,9 @@ import java.util.Locale;
 public class LibrespotService extends Service {
     private static final String TAG = "Librespot";
     private static final String CHANNEL_ID = "librespot";
-    private static final String DEVICE_NAME = "Portal";
+    // How the speaker shows up in Spotify. Not "Portal": the hardware is
+    // already called that, so two different things would share the name.
+    private static final String DEVICE_NAME = "Room OS";
     private static final int SAMPLE_RATE = 44100;   // librespot's pipe output is always 44.1 kHz
     private static final int FRAME_BYTES = 4;       // stereo * 16-bit
     private static final long STATS_INTERVAL_NS = 30_000_000_000L;
@@ -285,7 +287,7 @@ public class LibrespotService extends Service {
         Notification.Builder b = (Build.VERSION.SDK_INT >= 26)
             ? new Notification.Builder(this, CHANNEL_ID)
             : new Notification.Builder(this);
-        return b.setContentTitle("Portal audio")
+        return b.setContentTitle("Room OS audio")
             .setContentText("Ready as a Spotify Connect speaker · +" + gainDb() + " dB")
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setOngoing(true)
