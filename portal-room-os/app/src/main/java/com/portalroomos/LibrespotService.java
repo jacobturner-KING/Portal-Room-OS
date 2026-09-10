@@ -61,6 +61,9 @@ public class LibrespotService extends Service {
     private Process process;
     private volatile AudioTrack audioTrack;
     private volatile LoudnessEnhancer loudness;
+    /** The floating "OS" chip. Lives here because this is the one service
+     *  that is always up, from boot onwards. */
+    private RoomOsOverlay overlay;
     private WifiManager.MulticastLock multicastLock;
     private WifiManager.WifiLock wifiLock;
     private PowerManager.WakeLock wakeLock;
@@ -69,6 +72,13 @@ public class LibrespotService extends Service {
         super.onCreate();
         acquireLocks();
         startForeground(1, buildNotification());
+
+        // The chip stands down while one of our own screens is already showing.
+        overlay = new RoomOsOverlay(this);
+        RoomOsApp.onForegroundChange(() -> {
+            if (RoomOsApp.inForeground()) overlay.hide(); else overlay.show();
+        });
+
         running = true;
         worker = new Thread(this::runLoop, "librespot-runner");
         worker.start();
@@ -291,6 +301,8 @@ public class LibrespotService extends Service {
         if (multicastLock != null && multicastLock.isHeld()) multicastLock.release();
         if (wifiLock != null && wifiLock.isHeld()) wifiLock.release();
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+        RoomOsApp.onForegroundChange(null);
+        if (overlay != null) overlay.hide();
         super.onDestroy();
     }
 

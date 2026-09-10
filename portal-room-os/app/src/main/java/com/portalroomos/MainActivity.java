@@ -135,7 +135,11 @@ public class MainActivity extends Activity {
         for (ResolveInfo ri : getPackageManager().queryIntentActivities(home, 0)) {
             if (ri.activityInfo == null) continue;
             if (getPackageName().equals(ri.activityInfo.packageName)) continue;
-            Intent go = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+            // Resolve with CATEGORY_HOME, but launch without it. Room OS is a
+            // home app too, so a HOME intent lands in the home task and this
+            // activity simply comes back to the front. An explicit component
+            // does not need the category to start.
+            Intent go = new Intent(Intent.ACTION_MAIN);
             go.setClassName(ri.activityInfo.packageName, ri.activityInfo.name);
             go.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             return go;

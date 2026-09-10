@@ -7,12 +7,15 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- The floating OS chip. Grant once over adb; see RoomOsOverlay. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <application
+        android:name=".RoomOsApp"
         android:allowBackup="false"
         android:label="Portal Room OS"
         android:theme="@style/AppTheme"
@@ -27,10 +30,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <!-- Offers Room OS as a home screen. Adding this does not seize
-                     anything: Android asks which home to use, and the Portal
-                     button on the dashboard goes back to the stock one. -->
-                <category android:name="android.intent.category.HOME" />
             </intent-filter>
         </activity>
         <activity

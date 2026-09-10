@@ -199,30 +199,47 @@ Three things set how loud the Portal is, in order:
 - Account setup only completed on a non-home Wi-Fi (Facebook "unknown error (1)"
   and WhatsApp "can't link" on the home network).
 
-## Home screen
-The Portal's own launcher lists only Facebook's apps (Contacts, App Store,
-Browser, Settings, Help). It does not enumerate installed apps, so a sideloaded
-one cannot put an icon there however it declares itself, and the device has no
-notification shade or recents switcher to reach it another way. Three things
-close that gap instead:
+## Getting to the dashboard
+The Portal's launcher lists only Facebook's apps (Contacts, App Store, Browser,
+Settings, Help). It does not enumerate installed ones, so a sideloaded app cannot
+put an icon on that grid or add a tab beside Home and Apps however it declares
+itself, and the device has no home key, notification shade or recents switcher to
+reach it another way. Two things close the gap, and they are a pair:
 
-- `BootReceiver` starts the dashboard as well as the speaker, so a panel that
-  has been unplugged comes back showing the room. Starting an activity from
-  `BOOT_COMPLETED` is allowed on API 28; the restrictions arrived in API 29.
-- `MainActivity` also registers `category.HOME`, so Room OS offers itself as a
-  home screen. Adding that seizes nothing: with two home apps and no default,
-  the Home key shows Android's chooser. Pick Room OS and **Always** to make it
-  the face of the device, or **Just once** to leave the choice open.
-- The dashboard's **Portal** button goes back to the stock launcher. It resolves
-  every home activity except our own rather than naming a package, so it is not
-  tied to one launcher, and hides itself if there is no other home to go to.
+- **Out:** the dashboard's **Portal** button starts the stock launcher. It
+  resolves every home activity except our own rather than naming a package, so it
+  is not tied to one launcher, and hides itself if there is no other home.
+- **Back in:** a small **OS** chip floats over whatever is on screen, top right,
+  clear of the launcher's account avatar. Tapping it brings the dashboard
+  forward. It stands down while one of our own screens is already showing, which
+  `RoomOsApp` tracks through activity lifecycle callbacks.
 
-To undo: Settings → Apps → Default apps → Home, or over adb
-`adb -s $PORTAL shell cmd package set-home-activity <package>/<activity>`.
-Worth knowing before you choose **Always**: if Room OS is the default home and it
-ever fails to start, the Home key has nowhere friendly to land and you will need
-adb to get back. The Portal button is the in-app escape hatch for everything short
-of that.
+A system overlay is the only mechanism Android gives a third-party app to put a
+control on someone else's screen. It needs `SYSTEM_ALERT_WINDOW`, which a
+sideloaded app cannot usefully prompt for here, so grant it once per device:
+
+```bash
+adb -s $PORTAL shell appops set com.portalroomos SYSTEM_ALERT_WINDOW allow
+```
+
+Without the grant the chip quietly stays hidden rather than crashing; look for
+`no draw-over-other-apps permission` under the `RoomOsOverlay` log tag.
+`BootReceiver` also starts the dashboard, not just the speaker, so an unplugged
+panel comes back showing the room.
+
+Room OS deliberately does **not** register `category.HOME`. It was tried and it
+backfires: with two home apps the Home key starts asking which one to use, and,
+worse, the Portal button stops working. Starting the stock launcher moves the
+home task, the system then re-launches whatever it resolves as home, and with
+Room OS in the running that is Room OS, so the screen bounces straight back. The
+`ActivityManager` log shows it plainly, a `START` for the launcher followed
+within a second by a `START ... cat=[android.intent.category.HOME]` for us. Being
+an ordinary app and floating a chip over the launcher is the arrangement that
+works. If the home role ever ends up in the wrong place:
+
+```bash
+adb -s $PORTAL shell cmd package set-home-activity <package>/<activity>
+```
 
 ## Rebuild librespot (only if needed)
 Clone `https://github.com/librespot-org/librespot` at `v0.8.0`, then with
