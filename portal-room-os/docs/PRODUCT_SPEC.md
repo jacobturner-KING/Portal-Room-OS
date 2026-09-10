@@ -1,5 +1,19 @@
 # Portal Room OS — Product Spec v0.1
 
+> **Status.** This is the design target, not a description of what exists. Much
+> of it is still unbuilt. For what actually runs today, see "What works today"
+> in `../README.md`.
+>
+> Built: the ambient dashboard, the Spotify controller and an on-device Spotify
+> Connect speaker, the calendar screens, the transit board, and a Pomodoro timer
+> and stopwatch. Everything sits on a photograph under a WCAG AAA contrast
+> contract that `../tools/contrast_check.py` enforces.
+>
+> Not built: presence and approach detection, the sleep/ambient/active state
+> machine, voice of any kind, reminders and the grocery list, and AI routing. The
+> Talk, Lights and Add buttons post actions to the Room Brain, which answers only
+> as far as its integrations are configured.
+
 ## Product thesis
 Turn a discontinued Meta Portal into a locally intelligent room interface: an ambient, glanceable home surface that wakes when someone approaches, accepts touch/voice commands, controls the home, shows what matters next, and delegates heavy AI reasoning to a separate Room Brain.
 
@@ -39,6 +53,7 @@ Turn a discontinued Meta Portal into a locally intelligent room interface: an am
 - Add grocery/item
 - “What’s next?”
 - “Focus today”
+- Timer: a Pomodoro with named sessions and a distraction log, and a stopwatch
 - Transit: live ferries both directions (plus an optional passenger water taxi)
   and real-time bus arrivals for the configured stops, glanceable before leaving
   the house
@@ -99,7 +114,11 @@ Example intents:
 - Voice capture begins only after push-to-talk in v1.
 - Persistent visual mic/camera indicators whenever active.
 - Physical privacy controls remain usable.
-- Prefer LAN-only Room Brain communication.
+- The Room Brain is a public Cloudflare Worker, not a LAN service: it holds the
+  integration credentials so the Portal never does, and every `/api` call carries
+  a bearer token. The Portal accepts no inbound connections. An earlier draft of
+  this spec assumed a LAN-only brain; the hosted Worker was chosen so the
+  dashboard keeps working from any network and no port is opened at home.
 
 ## Resilience
 - If Room Brain is offline, clock/date and cached content remain usable.
@@ -107,9 +126,11 @@ Example intents:
 - Never represent stale lock/security state as current.
 
 ## Success criteria for v1
-- Portal launches directly into Room OS.
+- Room OS is reachable in one tap from the Portal's own UI. (Making it the
+  launcher was tried and rejected: registering as a home app breaks the button
+  that returns to the stock UI. See Getting to the dashboard in the README.)
 - UI runs smoothly on API 28/29.
-- Room Brain state appears over LAN.
+- Room Brain state renders on the Portal, authenticated.
 - At least one Home Assistant entity can be toggled.
 - Daily focus + next calendar event render.
 - Presence can switch Ambient ↔ Active on at least one supported method.
