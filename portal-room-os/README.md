@@ -54,11 +54,10 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   `tools/bowl_preview.py` parses those constants straight out of the Java and
   renders the same waveform to a WAV, so the tone can be auditioned on a laptop
   and cannot drift from what the Portal plays. It comes out of the media stream,
-  so it follows the same volume as music, and rides it at a quarter amplitude
-  (`SingingBowl.VOLUME`, 0.25, about 12 dB down) because the stream is pinned to
-  maximum for the speaker, and a bell at full scale in a quiet room is alarming
-  rather than pleasant. Raise that toward 1.0 for a louder bell; the preview folds
-  the same figure in, so it stays honest.
+  so it follows the same volume as music, and rides it at half amplitude
+  (`SingingBowl.VOLUME`, 0.5, about 6 dB down) so a struck bell sits under music
+  rather than on top of it. Raise that toward 1.0 for a louder bell; the preview
+  folds the same figure in, so it stays honest.
 
   Picking an interval mid-session queues it rather than tearing down the run.
 
@@ -172,14 +171,17 @@ flows it logs a line every 30 s with seconds streamed and the underrun delta
 
 ### Loudness
 Three things set how loud the Portal is, in order:
-1. The Spotify app's volume slider for "Portal" (librespot softvol, cubic curve).
-   Push it to 100% for maximum output. A fresh install starts at 25%
-   (`LibrespotService.DEFAULT_VOLUME_PCT`) rather than full, so the first thing
-   you play does not blast the room. That is only a default: librespot caches the
-   last volume in `files/librespot/volume` and the cache wins on every later
-   start, so turning it up in Spotify sticks. Delete that file to get the default
-   back. The timer's bell is separate, at `SingingBowl.VOLUME` (0.25).
-2. Android's media stream. The service pins it to max whenever audio starts.
+1. The Portal's own hardware volume control. The app never touches it. An earlier
+   version pinned Android's media stream to maximum whenever audio started, which
+   made the on-screen indicator and the physical control jump to full on every
+   sound and silently overrode whatever the room was set to. Don't reintroduce
+   that: this is the control the person in the room reaches for.
+2. The Spotify app's volume slider for "Portal" (librespot softvol, cubic curve),
+   riding underneath. A fresh install starts at `DEFAULT_VOLUME_PCT` (100), but
+   librespot caches the last volume in `files/librespot/volume` and the cache wins
+   on every later start, so what you set in Spotify sticks. Delete that file to
+   get the default back. The timer's bell is separate, at `SingingBowl.VOLUME`
+   (0.5).
 3. A LoudnessEnhancer gain stage (limiter-backed, default +8 dB) on the
    AudioTrack. Tune it live, no rebuild, 0 to 20 dB; the value persists:
    ```bash
@@ -296,10 +298,9 @@ Things that cost time here, so they do not cost you any.
   the screen goes away, and if two screens ticked they would cross the same
   boundary and credit the session twice. Anything new that reads the timer should
   go through `TimerState`, not keep its own copy.
-- The bell rides the media stream, which `LibrespotService` pins to maximum
-  whenever audio starts, so a bell normalised to full scale is startling. It plays
-  at `SingingBowl.VOLUME` (0.25), and a fresh install starts Spotify's own slider
-  at 25% too.
+- The bell rides the media stream at `SingingBowl.VOLUME` (0.5) so it sits under
+  music rather than on top of it. Loudness overall is the room's hardware control;
+  the app deliberately does not set the system volume.
 - Nothing runs in the background. A phase that ends while the calendar, transit or
   music screen is up is picked up silently on return; only the dashboard and the
   timer screen ring.

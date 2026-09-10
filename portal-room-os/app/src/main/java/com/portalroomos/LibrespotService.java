@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.audiofx.LoudnessEnhancer;
 import android.net.wifi.WifiManager;
@@ -51,9 +50,10 @@ public class LibrespotService extends Service {
      * Where the Spotify slider for "Portal" starts on a fresh install, as a
      * percentage. Only a default: librespot caches the last volume in its system
      * cache and that wins on every later start, so turning it up in Spotify
-     * sticks. Delete `files/librespot/volume` to fall back to this again.
+     * sticks. Delete `files/librespot/volume` to fall back to this again. The
+     * room's own hardware volume control sits above this.
      */
-    private static final int DEFAULT_VOLUME_PCT = 25;
+    private static final int DEFAULT_VOLUME_PCT = 100;
     private static final int MAX_GAIN_DB = 20;
 
     private volatile boolean running = false;
@@ -175,17 +175,11 @@ public class LibrespotService extends Service {
         audioTrack = track;
         Log.i(TAG, "audio track ready: " + track.getBufferSizeInFrames() + " frames buffered ("
             + (track.getBufferSizeInFrames() * 1000 / SAMPLE_RATE) + " ms), min " + minBuf + " bytes");
-        // The Portal is a speaker: keep Android's media volume pinned at max so the
-        // Spotify volume slider (librespot's softvol) is the one volume control.
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        if (am != null) {
-            int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-            int cur = am.getStreamVolume(AudioManager.STREAM_MUSIC);
-            if (cur < max) {
-                am.setStreamVolume(AudioManager.STREAM_MUSIC, max, 0);
-                Log.i(TAG, "media volume " + cur + " -> " + max);
-            }
-        }
+        // Deliberately leaves the system media volume alone. Pinning it to max
+        // made the Portal's own volume indicator and hardware control jump to full
+        // every time any sound played, and silently overrode whatever the person
+        // in the room had set. The hardware control is the master; the Spotify
+        // slider and the timer's bell ride underneath it.
         try {
             LoudnessEnhancer le = new LoudnessEnhancer(track.getAudioSessionId());
             applyGain(le, gainDb());
