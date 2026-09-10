@@ -37,8 +37,9 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
 - Timer (`TimerActivity`, Timer button): a Pomodoro focus timer and a stopwatch
   behind one mode switch, sharing a hand-drawn radial dial (`TimerProgressView`,
   a plain `View` with an `onDraw` arc). The Pomodoro runs 25/5, 50/10 or a
-  custom interval you set with big steppers (focus 5 to 180 by 5, break 1 to 60
-  by 1), rolls focus straight into its break, and keeps a tap-once distraction
+  custom interval: tap the third INTERVAL button to open an editor with big
+  steppers (focus 5 to 180 by 5, break 1 to 60 by 1), and confirming selects it.
+  It rolls focus straight into its break, and keeps a tap-once distraction
   log so noting an interruption does not break flow. Name the session from the
   chip inside the ring before you start, or tap any finished row to rename it
   afterwards; the name sticks to following sessions until you change it, and
@@ -216,18 +217,84 @@ works too if you paste the id straight in and never commit it. First deploy:
 optional `TRANSIT_CONFIG` that drives the Transit screen. Link or re-link accounts at
 `<worker>/connect?admin=<ADMIN_TOKEN>`.
 
-## Pending (needs the owner)
-1. Re-link Spotify on `/connect` so playlists load (new scopes).
-2. Re-link Google on `/connect` to grant `calendar.events`, which turns on
-   event editing in the calendar screen (reads work with the old link).
-   Publish the Google OAuth consent screen so the refresh token stops expiring
-   after 7 days.
-3. Major Key: set `MAJOR_KEY_URL` + `MAJOR_KEY_KEY`; it must answer
-   `GET /focus` with `{ "focus": "..." }`.
-4. Home Assistant: expose HA via a Cloudflare Tunnel, set `HA_URL` + `HA_TOKEN`
-   secrets and the `HA_*` vars in `wrangler.jsonc`.
-5. Optional: request a OneBusAway Puget Sound API key and set it as the
-   `OBA_API_KEY` secret so the Transit screen stops sharing the throttled test key.
+## Gotchas
+
+Things that cost time here, so they do not cost you any.
+
+**The device**
+- The panel is 1280x800 landscape at 160 dpi, so `1dp = 1px = 1sp` and the screen
+  is 1280dp wide. That is an unusually large dp canvas: text and hit targets sized
+  for a phone look tiny on a wall. The dashboard clock is 48sp and the timer's
+  countdown 96sp for a reason.
+- `adb shell am start` cannot open the non-launcher screens: they are
+  `exported="false"`, so the shell (uid 2000) gets `Permission Denial ... not
+  exported`. Drive them by tapping, or export one temporarily while debugging.
+- The Portal's shell does 32-bit arithmetic. `echo $(($(date +%s) * 1000))`
+  silently returns a negative number, which quietly corrupts any test that pokes
+  epoch-millisecond values into the app. Compute those on the host.
+- Wi-Fi ADB drops on every reboot and the on-device installer dialog is unusable
+  (white on white). Re-arm over USB, and always `adb install`.
+
+**Changing the app id**
+- It gives the app a new data directory. The librespot credential cache goes with
+  it, so "Portal" stops appearing in Spotify until you pick it once from a client
+  on the same Wi-Fi, and the timer's session history and distraction log start
+  empty. Uninstall the old package afterwards or two builds will both advertise
+  themselves as "Portal".
+
+**Drawing over the photo**
+- Never carry state with `View.setAlpha()`. Fading a whole control composites its
+  label toward the photograph and drops the contrast below AAA. Say it in colour
+  instead: `@color/accent` selected, `@color/muted` not. The calendar's mode
+  buttons made exactly this mistake.
+- New text has to sit on one of the defined surfaces (`panel_bg`, `bar_bg`,
+  `chip_bg`, `button_bg`) and be added to `ELEMENTS` in
+  `tools/contrast_check.py`. Text placed straight on the photo cannot be made
+  AAA, because the sky is nearly white.
+- `AlertDialog` inherits `Theme.Material.Light`, so a dialog arrives white unless
+  you give it a background and colour the buttons the platform builds. Dialogs and
+  the soft keyboard also bring the system bars back over an immersive activity;
+  the timer's dialogs call `hideSystemUi()` on dismiss.
+
+**The timer**
+- The Pomodoro is pinned to a wall-clock instant rather than counted in ticks, and
+  only the screen in front advances it. Both matter: counting drifts and dies when
+  the screen goes away, and if two screens ticked they would cross the same
+  boundary and credit the session twice. Anything new that reads the timer should
+  go through `TimerState`, not keep its own copy.
+- The bell rides the media stream, which `LibrespotService` pins to maximum
+  whenever audio starts, so a bell normalised to full scale is startling. It plays
+  at `SingingBowl.VOLUME` (0.5).
+- Nothing runs in the background. A phase that ends while the calendar, transit or
+  music screen is up is picked up silently on return; only the dashboard and the
+  timer screen ring.
+
+**The Worker**
+- Google's refresh token expires after seven days while the OAuth consent screen
+  is still in testing. Publish it, or the calendar quietly stops loading each week.
+- OneBusAway's shared `TEST` key throttles bursts, so an occasional "live data
+  unavailable" line on the transit screen is normal until you set `OBA_API_KEY`.
+- `TRANSIT_CONFIG` is not optional if you want the transit screen: with none set,
+  `/api/transit` answers `configured: false` and the screen says so.
+- `wrangler.jsonc` ships the KV namespace id as a placeholder, so a plain
+  `wrangler deploy` binds nothing useful. See the Worker section above.
+
+## Optional integrations
+The dashboard, calendar, music, transit and timer all work with just Spotify and
+Google linked. These fill in the rest:
+
+1. Spotify and Google are linked at `<worker>/connect?admin=<ADMIN_TOKEN>`.
+   Google needs the `calendar.events` scope for event editing; reads work
+   without it. Publish the consent screen (see Gotchas).
+2. Transit: set `TRANSIT_CONFIG`. Shape and an example in `.dev.vars.example`.
+3. Daily focus line: set `MAJOR_KEY_URL` + `MAJOR_KEY_KEY` to any service that
+   answers `GET /focus` with `{ "focus": "..." }`. Without it the dashboard shows
+   a standing prompt.
+4. Home line and the Lights button: expose Home Assistant to the Worker (a
+   Cloudflare Tunnel works), set the `HA_URL` + `HA_TOKEN` secrets and the `HA_*`
+   vars in `wrangler.jsonc`.
+5. Transit accuracy: request a OneBusAway Puget Sound API key and set it as
+   `OBA_API_KEY` so the screen stops sharing the throttled test key.
 
 ## Roadmap after that
 1. Timer alerts from any screen: an `AlarmManager` wake-up plus a notification,
