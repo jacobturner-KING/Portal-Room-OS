@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Android / Gradle (build outputs, IDE state, machine-local SDK path + app token)
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+captures/
+.cxx/
+
+# Cloudflare Worker
+node_modules/
+.wrangler/
+worker-configuration.d.ts
+dist/
+
+# Python mock server
+.venv/
+__pycache__/
+*.pyc
+
+# Secrets: never commit
+.dev.vars
+*.keystore
+*.jks

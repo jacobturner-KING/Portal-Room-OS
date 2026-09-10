@@ -1,0 +1,27 @@
+<resources>
+    <!-- Ink. Every colour here is checked by tools/contrast_check.py against the
+         surfaces below. Change one and re-run that script, then mirror it into
+         CalUi.java. -->
+    <color name="text">#F6F7FB</color>
+    <color name="muted">#BCC3D1</color>
+    <color name="accent">#AEC0FF</color>
+    <color name="success">#73D19C</color>
+    <color name="amber">#F0C674</color>
+    <color name="alert">#FFAAAA</color>
+
+    <!-- Surfaces. Translucent so the photo reads through, dark enough that the
+         ink above clears WCAG AAA even where the photo is pure white. -->
+    <color name="panel">#E00E1119</color>
+    <color name="bar">#EB0B0E16</color>
+    <color name="button">#E6101420</color>
+    <color name="button_pressed">#F2262D3D</color>
+
+    <!-- Dialogs float above the photo on their own opaque ground. -->
+    <color name="dialog">#FF141824</color>
+
+    <!-- Rules and dividers, at 3:1 against panel for SC 1.4.11. -->
+    <color name="rule">#66FFFFFF</color>
+
+    <!-- Opaque fallback: window background before the photo draws, system bars. -->
+    <color name="bg">#101218</color>
+</resources>

@@ -1,0 +1,26 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+    <LinearLayout
+        android:layout_width="110dp"
+        android:layout_height="wrap_content"
+        android:gravity="bottom"
+        android:orientation="horizontal">
+        <TextView android:id="@+id/rowTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="1" android:text="4:45" android:textColor="@color/text" android:textSize="24sp" android:textStyle="bold" />
+        <TextView android:id="@+id/rowAmPm" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="3dp" android:paddingBottom="3dp" android:maxLines="1" android:text="PM" android:textColor="@color/muted" android:textSize="12sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="6dp"
+        android:orientation="vertical">
+        <TextView android:id="@+id/rowTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end" android:text="" android:textColor="@color/text" android:textSize="17sp" />
+        <TextView android:id="@+id/rowSub" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="2" android:ellipsize="end" android:text="" android:textColor="@color/muted" android:textSize="13sp" />
+    </LinearLayout>
+    <TextView android:id="@+id/rowStatus" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:maxWidth="190dp" android:gravity="end" android:text="" android:textColor="@color/success" android:textSize="13sp" android:textStyle="bold" />
+</LinearLayout>

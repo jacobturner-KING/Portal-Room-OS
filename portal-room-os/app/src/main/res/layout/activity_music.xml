@@ -1,0 +1,155 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:padding="22dp">
+
+    <!-- Left: now playing + transport -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@drawable/panel_bg"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <ImageView
+            android:id="@+id/art"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            android:layout_marginTop="6dp"
+            android:background="#4D000000"
+            android:scaleType="centerCrop"
+            android:contentDescription="Album art" />
+
+        <TextView
+            android:id="@+id/trackTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:text="Nothing playing"
+            android:textColor="@color/text"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/trackArtist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text=""
+            android:textColor="@color/muted"
+            android:textSize="17sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal">
+            <Button android:id="@+id/prevBtn" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="96dp" android:background="@drawable/button_bg" android:text="Prev" android:textColor="@color/text" android:textAllCaps="false" android:layout_marginEnd="10dp" />
+            <Button android:id="@+id/playPause" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="120dp" android:background="@drawable/button_bg" android:text="Play" android:textColor="@color/text" android:textStyle="bold" android:textAllCaps="false" android:layout_marginEnd="10dp" />
+            <Button android:id="@+id/nextBtn" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="96dp" android:background="@drawable/button_bg" android:text="Next" android:textColor="@color/text" android:textAllCaps="false" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/deviceBtn"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/button_bg"
+            android:text="Choose device"
+            android:textColor="@color/text"
+            android:textAllCaps="false" />
+
+        <TextView
+            android:id="@+id/deviceLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Playing on: active device"
+            android:textColor="@color/muted"
+            android:textSize="13sp" />
+
+        <Space android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/backBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button_bg"
+            android:text="‹ Back to dashboard"
+            android:textColor="@color/muted"
+            android:textAllCaps="false" />
+    </LinearLayout>
+
+    <Space android:layout_width="18dp" android:layout_height="1dp" />
+
+    <!-- Right: search + list -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1.35"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/searchInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/panel_bg"
+                android:hint="Search Spotify"
+                android:textColorHint="@color/muted"
+                android:textColor="@color/text"
+                android:padding="14dp"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:singleLine="true" />
+            <Button android:id="@+id/searchBtn" android:paddingStart="18dp" android:paddingEnd="18dp" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_marginStart="10dp" android:background="@drawable/button_bg" android:text="Search" android:textColor="@color/text" android:textAllCaps="false" />
+            <Button android:id="@+id/playlistsBtn" android:paddingStart="18dp" android:paddingEnd="18dp" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_marginStart="10dp" android:background="@drawable/button_bg" android:text="Playlists" android:textColor="@color/text" android:textAllCaps="false" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/listTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/chip_bg"
+            android:text="Your playlists"
+            android:textColor="@color/muted"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <ListView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/panel_bg"
+            android:divider="@color/rule"
+            android:dividerHeight="1dp"
+            android:scrollbarStyle="outsideOverlay" />
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/chip_bg"
+            android:text=""
+            android:textColor="@color/muted"
+            android:textSize="13sp" />
+    </LinearLayout>
+</LinearLayout>

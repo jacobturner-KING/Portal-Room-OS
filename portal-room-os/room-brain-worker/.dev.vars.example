@@ -1,0 +1,52 @@
+# Copy to .dev.vars for local `wrangler dev`, and set the same keys in production with:
+#   wrangler secret put <NAME>
+# None of these are committed. .dev.vars is gitignored.
+
+# Bearer token the Portal app sends on every /api request.
+APP_TOKEN="change-me-portal-token"
+
+# Gate for the /connect admin page. Open /connect?admin=THIS_VALUE once to link accounts.
+ADMIN_TOKEN="change-me-admin-token"
+
+# Spotify (Web API app from https://developer.spotify.com/dashboard)
+SPOTIFY_CLIENT_ID=""
+SPOTIFY_CLIENT_SECRET=""
+
+# Google Cloud OAuth client (Calendar API, consent screen published)
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+
+# Major Key service (must be reachable from the internet)
+MAJOR_KEY_URL=""
+MAJOR_KEY_KEY=""
+
+# Home Assistant (base URL reachable from the Worker, e.g. via a Cloudflare Tunnel,
+# plus a long-lived access token). Entity choices live in wrangler.jsonc vars.
+HA_URL=""
+HA_TOKEN=""
+
+# OneBusAway Puget Sound API key for the Transit screen (optional; "TEST" is used otherwise)
+OBA_API_KEY=""
+
+# Transit screen: which terminals, stops and routes to show. Everything
+# location-specific lives here rather than in source, so a checkout carries no
+# one's home town. Leave it unset and the Transit screen simply says it is not
+# configured. One line of JSON; single quotes so the inner quotes survive.
+#
+#   title       the screen's heading
+#   terminals   WSDOT terminal id -> the name to show
+#   ferryPairs  departing [from, to] pairs; arrivals are these reversed
+#   ferryRoutes WSDOT route ids whose service alerts are worth showing
+#   waterTaxi   optional passenger-only route: one OneBusAway route and its stops,
+#               each { id, goes (where it sails to), from (where it leaves) }
+#   bus.stops   OneBusAway stop ids;  bus.routes  route short names to keep
+#   bus.names   fallback names for when OneBusAway throttles us
+#   bus.trim    dropped from the front of a stop name (a shared highway, say)
+#   bus.headings compass letter -> human heading
+#   bus.rename  whole-name rewrites, tried before trim
+#
+# WSDOT terminal ids: https://www.wsdot.wa.gov/ferries/api/terminals/rest/terminalbasics
+# OneBusAway stop ids: https://pugetsound.onebusaway.org (the stop page URL ends in one)
+#
+# Example only, for Seattle - Bainbridge. Replace with your own.
+TRANSIT_CONFIG='{"title":"Island Transit","terminals":{"7":"Seattle","3":"Bainbridge"},"ferryPairs":[[3,7]],"ferryRoutes":[5],"waterTaxi":null,"bus":{"stops":["1_12345"],"routes":["90"],"names":{"1_12345":{"name":"Main St & 1st Ave","direction":"N"}},"trim":"Main St & ","headings":{"N":"toward the ferry","S":"toward town"},"rename":[{"match":"Ferry Terminal","as":"Ferry dock"}]}}'

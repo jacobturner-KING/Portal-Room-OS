@@ -1,0 +1,10 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingTop="7dp"
+    android:paddingBottom="7dp">
+    <TextView android:id="@+id/distractionTime" android:layout_width="96dp" android:layout_height="wrap_content" android:maxLines="1" android:text="" android:textColor="@color/text" android:textSize="17sp" />
+    <TextView android:id="@+id/distractionWhere" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:maxLines="1" android:ellipsize="end" android:text="" android:textColor="@color/muted" android:textSize="15sp" />
+</LinearLayout>

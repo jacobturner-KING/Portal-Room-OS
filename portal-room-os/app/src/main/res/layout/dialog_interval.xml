@@ -1,0 +1,53 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="28dp"
+    android:paddingEnd="28dp"
+    android:paddingTop="24dp"
+    android:paddingBottom="8dp">
+
+    <TextView
+        android:id="@+id/dialogTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Custom interval"
+        android:textColor="@color/text"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:layout_marginTop="22dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView android:layout_width="104dp" android:layout_height="wrap_content" android:text="FOCUS" android:textColor="@color/muted" android:textSize="14sp" android:textStyle="bold" />
+        <Button android:id="@+id/focusMinus" android:layout_width="84dp" android:layout_height="match_parent" android:background="@drawable/button_bg" android:text="–" android:textColor="@color/text" android:textSize="30sp" />
+        <TextView android:id="@+id/focusValue" android:layout_width="118dp" android:layout_height="wrap_content" android:gravity="center" android:text="45" android:textColor="@color/text" android:textSize="42sp" android:textStyle="bold" />
+        <Button android:id="@+id/focusPlus" android:layout_width="84dp" android:layout_height="match_parent" android:background="@drawable/button_bg" android:text="+" android:textColor="@color/text" android:textSize="30sp" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:text="min" android:textColor="@color/muted" android:textSize="17sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView android:layout_width="104dp" android:layout_height="wrap_content" android:text="BREAK" android:textColor="@color/muted" android:textSize="14sp" android:textStyle="bold" />
+        <Button android:id="@+id/breakMinus" android:layout_width="84dp" android:layout_height="match_parent" android:background="@drawable/button_bg" android:text="–" android:textColor="@color/text" android:textSize="30sp" />
+        <TextView android:id="@+id/breakValue" android:layout_width="118dp" android:layout_height="wrap_content" android:gravity="center" android:text="15" android:textColor="@color/text" android:textSize="42sp" android:textStyle="bold" />
+        <Button android:id="@+id/breakPlus" android:layout_width="84dp" android:layout_height="match_parent" android:background="@drawable/button_bg" android:text="+" android:textColor="@color/text" android:textSize="30sp" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:text="min" android:textColor="@color/muted" android:textSize="17sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/intervalHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Focus steps by 5, break by 1."
+        android:textColor="@color/muted"
+        android:textSize="15sp" />
+</LinearLayout>

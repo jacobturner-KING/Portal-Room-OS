@@ -1,0 +1,54 @@
+plugins {
+    id 'com.android.application'
+}
+
+// The Room Brain bearer token is a secret and stays out of source control:
+// put `roomBrain.appToken=<APP_TOKEN>` in local.properties (gitignored), or export
+// ROOM_BRAIN_APP_TOKEN. It reaches the app as BuildConfig.ROOM_BRAIN_APP_TOKEN.
+def localProps = new Properties()
+def localPropsFile = rootProject.file('local.properties')
+if (localPropsFile.exists()) {
+    localPropsFile.withInputStream { localProps.load(it) }
+}
+def roomBrainAppToken = localProps.getProperty('roomBrain.appToken') ?: System.getenv('ROOM_BRAIN_APP_TOKEN') ?: ''
+def roomBrainUrl = localProps.getProperty('roomBrain.url') ?: System.getenv('ROOM_BRAIN_URL') ?: ''
+if (roomBrainUrl.isEmpty()) {
+    logger.warn('roomBrain.url is not set in local.properties; the app has no Room Brain to talk to')
+}
+if (roomBrainAppToken.isEmpty()) {
+    logger.warn('roomBrain.appToken is not set in local.properties; the app will fail auth against the Room Brain')
+}
+def roomBrainAppTokenLiteral = '"' + roomBrainAppToken.replace('\\', '\\\\').replace('"', '\\"') + '"'
+def roomBrainUrlLiteral = '"' + roomBrainUrl.replace('\\', '\\\\').replace('"', '\\"') + '"'
+
+android {
+    namespace 'com.portalroomos'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.portalroomos'
+        minSdk 28
+        targetSdk 29
+        versionCode 1
+        versionName '0.1.0'
+        buildConfigField 'String', 'ROOM_BRAIN_APP_TOKEN', roomBrainAppTokenLiteral
+        buildConfigField 'String', 'ROOM_BRAIN_URL', roomBrainUrlLiteral
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    packaging {
+        jniLibs {
+            // Bundled librespot executable — already stripped; don't let AGP re-strip it.
+            keepDebugSymbols += '**/liblibrespot.so'
+            useLegacyPackaging true
+        }
+    }
+}

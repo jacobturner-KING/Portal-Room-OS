@@ -1,0 +1,21 @@
+<!-- The photo, plus a vertical scrim that anchors the top and bottom bands
+     where text lives. The bitmap is 1280x800, the Portal's exact panel size,
+     so "fill" is a 1:1 blit with no scaling or distortion. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/bg" />
+    <item>
+        <bitmap
+            android:src="@drawable/portal_background"
+            android:gravity="fill" />
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#66060911"
+                android:centerColor="#33060911"
+                android:endColor="#73060911"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

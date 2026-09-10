@@ -1,0 +1,34 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "portal-room-brain",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "kv_namespaces": [
+    {
+      "binding": "ROOM_KV",
+      // Yours, from: wrangler kv namespace create ROOM_KV
+      "id": "<your-kv-namespace-id>"
+    }
+  ],
+  "vars": {
+    // Weather location. Leave empty to auto-detect from the Portal's network
+    // (Cloudflare geo-IP, city-level). Set all three to pin an exact spot,
+    // e.g. "47.6062", "-122.3321", "Seattle".
+    "WEATHER_LAT": "",
+    "WEATHER_LON": "",
+    "WEATHER_LABEL": "",
+    // Home Assistant (needs HA_URL + HA_TOKEN secrets): entities for the dashboard
+    // home line, and the one the Lights button toggles, e.g. "light.living_room".
+    "HA_SUMMARY_ENTITIES": "",
+    "HA_LIGHT_ENTITY": "",
+    // Transit is configured by the TRANSIT_CONFIG value, not here, so this file
+    // names no terminal, stop or town. See .dev.vars.example for its shape and
+    // set it with: wrangler secret put TRANSIT_CONFIG
+    "TRANSIT_PLACEHOLDER": ""
+  }
+}

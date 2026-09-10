@@ -1,0 +1,8 @@
+node_modules/
+.wrangler/
+.dev.vars
+worker-configuration.d.ts
+dist/
+
+# Local deploy config: real KV id and any account-specific values
+wrangler.local.jsonc

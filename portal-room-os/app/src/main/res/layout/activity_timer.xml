@@ -1,0 +1,283 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="68dp"
+        android:background="@drawable/bar_bg"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <Button android:id="@+id/backBtn" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="56dp" android:background="@drawable/button_bg" android:text="‹" android:textColor="@color/text" android:textSize="24sp" android:textAllCaps="false" />
+        <TextView
+            android:id="@+id/screenTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="Timer"
+            android:textColor="@color/text"
+            android:textSize="23sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/headerHint"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="14dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text=""
+            android:textColor="@color/muted"
+            android:textSize="14sp" />
+        <Button android:id="@+id/modeTimer" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="128dp" android:background="@drawable/button_bg" android:text="Timer" android:textColor="@color/text" android:textSize="16sp" android:textAllCaps="false" />
+        <Button android:id="@+id/modeStopwatch" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="150dp" android:layout_marginStart="8dp" android:background="@drawable/button_bg" android:text="Stopwatch" android:textColor="@color/text" android:textSize="16sp" android:textAllCaps="false" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <!-- The dial: ring behind, time on the panel in front of it. -->
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/panel_bg">
+
+            <com.portalroomos.TimerProgressView
+                android:id="@+id/progress"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/bigTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:text="25:00"
+                        android:textColor="@color/text"
+                        android:textSize="96sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/fraction"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:text=""
+                        android:textColor="@color/muted"
+                        android:textSize="38sp"
+                        android:visibility="gone" />
+                </LinearLayout>
+                <TextView
+                    android:id="@+id/phaseLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:letterSpacing="0.18"
+                    android:text="READY"
+                    android:textColor="@color/accent"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/nameChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/chip_bg"
+                    android:maxWidth="330dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:minHeight="48dp"
+                    android:gravity="center"
+                    android:text="Name this session"
+                    android:textColor="@color/accent"
+                    android:textSize="18sp" />
+                <TextView
+                    android:id="@+id/phaseSub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text=""
+                    android:textColor="@color/muted"
+                    android:textSize="17sp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <Space android:layout_width="14dp" android:layout_height="1dp" />
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.1">
+
+            <!-- Timer side: intervals, today's count, distraction log. -->
+            <LinearLayout
+                android:id="@+id/timerPanel"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/panel_bg"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="INTERVAL"
+                    android:textColor="@color/muted"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="84dp"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+                    <Button android:id="@+id/presetStandard" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/button_bg" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
+                    <Space android:layout_width="12dp" android:layout_height="1dp" />
+                    <Button android:id="@+id/presetDeep" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/button_bg" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
+                    <Space android:layout_width="12dp" android:layout_height="1dp" />
+                    <Button android:id="@+id/presetCustom" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/button_bg" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/sessionsHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:text="SESSIONS TODAY"
+                    android:textColor="@color/muted"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/sessionsEmpty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="No focus sessions yet"
+                    android:textColor="@color/muted"
+                    android:textSize="17sp" />
+                <ScrollView
+                    android:id="@+id/sessionScroll"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1.2"
+                    android:layout_marginTop="6dp"
+                    android:scrollbars="none">
+                    <LinearLayout
+                        android:id="@+id/sessionList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+                </ScrollView>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/distractionHeader"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="DISTRACTIONS"
+                        android:textColor="@color/muted"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                    <Button android:id="@+id/clearDistractions" android:layout_width="wrap_content" android:layout_height="44dp" android:paddingStart="18dp" android:paddingEnd="18dp" android:background="@drawable/button_bg" android:text="Clear" android:textColor="@color/muted" android:textSize="14sp" android:textAllCaps="false" />
+                </LinearLayout>
+                <ScrollView
+                    android:id="@+id/distractionScroll"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginTop="6dp"
+                    android:scrollbars="none">
+                    <LinearLayout
+                        android:id="@+id/distractionList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+                </ScrollView>
+            </LinearLayout>
+
+            <!-- Stopwatch side: laps. -->
+            <LinearLayout
+                android:id="@+id/stopwatchPanel"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/panel_bg"
+                android:orientation="vertical"
+                android:visibility="gone">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LAPS"
+                    android:textColor="@color/muted"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/lapSummary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Tap Lap to record a split"
+                    android:textColor="@color/muted"
+                    android:textSize="15sp" />
+                <ScrollView
+                    android:id="@+id/lapScroll"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginTop="8dp"
+                    android:scrollbars="none">
+                    <LinearLayout
+                        android:id="@+id/lapList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+                </ScrollView>
+            </LinearLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal">
+        <Button android:id="@+id/primaryBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.4" android:background="@drawable/button_bg" android:text="Start" android:textColor="@color/text" android:textSize="26sp" android:textStyle="bold" android:textAllCaps="false" />
+        <Space android:layout_width="14dp" android:layout_height="1dp" />
+        <Button android:id="@+id/resetBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/button_bg" android:text="Reset" android:textColor="@color/text" android:textSize="22sp" android:textAllCaps="false" />
+        <Space android:layout_width="14dp" android:layout_height="1dp" />
+        <Button android:id="@+id/extraBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.3" android:background="@drawable/button_bg" android:text="Log distraction" android:textColor="@color/text" android:textSize="22sp" android:textAllCaps="false" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/chip_bg"
+        android:text=""
+        android:textColor="@color/muted"
+        android:textSize="13sp" />
+</LinearLayout>

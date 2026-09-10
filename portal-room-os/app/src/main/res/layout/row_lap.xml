@@ -1,0 +1,11 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingTop="9dp"
+    android:paddingBottom="9dp">
+    <TextView android:id="@+id/lapIndex" android:layout_width="62dp" android:layout_height="wrap_content" android:text="" android:textColor="@color/muted" android:textSize="15sp" />
+    <TextView android:id="@+id/lapSplit" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:maxLines="1" android:text="" android:textColor="@color/text" android:textSize="22sp" android:textStyle="bold" />
+    <TextView android:id="@+id/lapTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:gravity="end" android:maxLines="1" android:text="" android:textColor="@color/muted" android:textSize="14sp" />
+</LinearLayout>

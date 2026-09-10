@@ -1,0 +1,19 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="8dp">
+        <TextView android:id="@+id/evTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="22sp" android:textStyle="bold" />
+        <TextView android:id="@+id/evWhen" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textSize="16sp" />
+        <TextView android:id="@+id/evWhere" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:textSize="15sp" />
+        <TextView android:id="@+id/evCalendar" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:alpha="0.7" android:textSize="13sp" />
+        <TextView android:id="@+id/evDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:maxLines="12" android:textSize="15sp" />
+        <TextView android:id="@+id/evAttendees" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:alpha="0.7" android:textSize="13sp" />
+    </LinearLayout>
+</ScrollView>
