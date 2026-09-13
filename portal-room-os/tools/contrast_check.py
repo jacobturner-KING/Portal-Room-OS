@@ -280,6 +280,9 @@ ELEMENTS = [
     ("music",     "item subtitle",      "muted",   14, False, "panel"),
     ("music",     "status line",        "muted",   13, False, "chip"),
 
+    ("youtube",   "OS chip",            "accent",  17, True,  "chip"),
+    ("youtube",   "status line",        "muted",   13, False, "chip"),
+
     ("timer",     "screen title",       "text",    23, True,  "bar"),
     ("timer",     "header hint",        "muted",   14, False, "bar"),
     ("timer",     "mode button on",     "accent",  16, False, "button"),

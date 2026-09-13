@@ -54,6 +54,9 @@ public class MainActivity extends Activity {
         bindAction(R.id.lights, "toggle_lights");
         findViewById(R.id.musicBtn).setOnClickListener(v ->
             startActivity(new Intent(this, MusicActivity.class)));
+        // Brought forward rather than started: the page may already be alive
+        // behind us, holding a phone's connection.
+        findViewById(R.id.youtubeBtn).setOnClickListener(v -> YouTubeActivity.open(this, null));
         bindAction(R.id.add, "add_item");
         View.OnClickListener openCalendar = v ->
             startActivity(new Intent(this, CalendarActivity.class));

@@ -79,6 +79,15 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   background, so a phase that ends while the Portal is on the calendar, transit
   or music screen is picked up silently on return rather than sounding.
 
+- YouTube (`YouTubeActivity`, YouTube button, or a cast from a phone): the
+  Portal is a cast target in the YouTube app, listed with the TVs on the same
+  Wi-Fi. `DialServer` answers the app's DIAL search, and a launch opens
+  YouTube's own TV site (youtube.com/tv, the one smart TVs run) in a WebView
+  wearing a TV user agent; the site does the pairing and the playback. The
+  screen sits behind the dashboard between casts and steps forward when the
+  phone starts something; Spotify on this speaker pauses when it does. Two
+  minutes with nothing playing and it hands back to the dashboard. See
+  YouTube in Gotchas for how it hangs together and what to check.
 - On-device audio (`LibrespotService`): a bundled Rust librespot 0.8.0 binary
   advertises the Portal as Connect device **"Room OS"** and plays through the
   Portal's speaker. Verified underrun-free with a 1 s AudioTrack buffer.
@@ -129,6 +138,8 @@ new 1280x800 PNG and re-run.
 ## Layout
 ```
 app/                    Android app (package com.portalroomos, no AndroidX)
+  src/main/java/com/portalroomos/DialServer.java      YouTube cast target (SSDP + DIAL over HTTP)
+  src/main/java/com/portalroomos/YouTubeActivity.java the TV site in a WebView
   src/main/jniLibs/arm64-v8a/liblibrespot.so   librespot binary (stripped, ~13 MB)
   src/main/res/drawable-nodpi/portal_background.png   wall photo, 1280x800
 tools/contrast_check.py WCAG AAA gate for the palette over that photo.
@@ -222,8 +233,13 @@ Three things set how loud the Portal is, in order:
 - ADB is enabled under Settings → Debug. `adb devices` gives the serial.
 - USB always works. Wi-Fi ADB is `adb connect <portal-ip>:5555`, armed with
   `adb tcpip 5555` over USB. It drops on every Portal reboot; re-cable to re-arm.
-- The Portal must be on the same Wi-Fi as the phones that should see "Room OS".
-  The Worker is public, so the dashboard works from any network.
+- The Portal must be on the same Wi-Fi as the phones that should see "Room OS",
+  in Spotify and in YouTube alike. The Worker is public, so the dashboard works
+  from any network.
+- YouTube discovery is SSDP on UDP 1900 plus HTTP on TCP 8091 (`DialServer.PORT`),
+  both on the Portal itself. A router that blocks multicast between clients
+  hides the Portal from the cast picker; the "Link with TV code" route below
+  still works then.
 - Account setup only completed on a non-home Wi-Fi (Facebook "unknown error (1)"
   and WhatsApp "can't link" on the home network).
 
@@ -347,6 +363,51 @@ Things that cost time here, so they do not cost you any.
   `adb logcat -s Librespot` then shows `Authenticated as`. Use the same librespot
   version at both ends.
 
+**YouTube**
+- Nothing to configure. The app answers a phone's DIAL search as soon as the
+  process is up (`RoomOsApp` starts `DialServer`; the speaker service keeps the
+  process alive from boot), and `BootReceiver` loads the YouTube page under the
+  dashboard so the first cast lands on a warm page. The site only registers
+  with YouTube's lounge (the phone-to-screen channel) once a cast has launched
+  it; until then the phone reaches it through DIAL, which is up from boot.
+- A cast the phone starts by launch reloads the page with its pairing code, so
+  the site may show its "who's watching" account picker before the video if
+  it cannot tell whose cast it is. If that happens on real casts, tap the
+  account once; taps work on the leanback UI.
+- Watch a phone find it: `adb -s $PORTAL logcat -s Dial YouTube`. A healthy
+  sequence is `M-SEARCH from <phone>`, `GET /dd.xml`, `GET /apps/YouTube -> 200`,
+  then on a cast `POST /apps/YouTube -> 201`, `launch: pairingCode=...`, the
+  site posting `dial_data` (its screen id) and finally `video playing`. Probe it
+  by hand from the Mac: `curl -i http://<portal-ip>:8091/dd.xml` and
+  `curl http://<portal-ip>:8091/apps/YouTube`.
+- The site is the real YouTube TV client, so the first phone to attach signs
+  the screen into its account (the site reloads once with
+  `is_account_switch=1`), and a new remote identity attaching makes it reload
+  again, which drops whatever was playing. One household account attaching
+  each time is the steady state.
+- Fallback, and the way to be listed from outside the house: on the Portal,
+  open YouTube, Settings (bottom of the left rail), "Link with TV code", and
+  enter the code in the phone's YouTube app under Settings, Watch on TV. That
+  link is account-level and survives networks and reboots.
+- The site keys the TV experience on the user agent (`YouTubeActivity.TV_USER_AGENT`,
+  a Samsung Tizen string). It may show a dismissable "this device no longer
+  fully supports YouTube" banner; that is cosmetic. If Google ever stops
+  serving the TV site to that string, changing it is the first thing to try.
+- The page must never learn it is behind the dashboard. The injected bridge
+  pins `document.hidden` to false and swallows `visibilitychange`, because on a
+  hidden document the site unloads its player and a phone's next play lands on
+  nothing. Likewise the activity never calls `WebView.onPause()`: that stops the
+  page's timers and with them the lounge connection the phone is holding.
+- Only unmuted playback pulls the screen forward. The leanback home autoplays
+  silent previews under the focused thumbnail; those are reported as muted and
+  ignored, or the dashboard would flip to YouTube on its own.
+- `additionalDataUrl` has to point at localhost. The site refuses to post its
+  screen id to any other host, which is fine: the page and `DialServer` share
+  the device.
+- The WebView is debuggable in debug builds: `adb forward tcp:9222
+  localabstract:webview_devtools_remote_$(adb shell pidof com.portalroomos)`
+  then `chrome://inspect` on the Mac, or `curl localhost:9222/json`.
+
 **Drawing over the photo**
 - Never carry state with `View.setAlpha()`. Fading a whole control composites its
   label toward the photograph and drops the contrast below AAA. Say it in colour
@@ -385,8 +446,9 @@ Things that cost time here, so they do not cost you any.
   `wrangler deploy` binds nothing useful. See the Worker section above.
 
 ## Optional integrations
-The dashboard, calendar, music, transit and timer all work with just Spotify and
-Google linked. These fill in the rest:
+The dashboard, calendar, music, transit, timer and YouTube casting all work
+with just Spotify and Google linked (YouTube needs nothing linked at all).
+These fill in the rest:
 
 1. Spotify and Google are linked at `<worker>/connect?admin=<ADMIN_TOKEN>`.
    Google needs the `calendar.events` scope for event editing; reads work

@@ -8,11 +8,17 @@ import android.os.Bundle;
  * Tracks whether any of our own screens is in front, so the floating OS chip can
  * take itself down while the dashboard is already showing and come back when the
  * Portal's launcher or anything else is on top.
+ *
+ * Also owns the DIAL responder that makes the Portal a YouTube cast target. It
+ * belongs to the process, not a screen: the speaker service keeps the process
+ * alive from boot, so the Portal answers a phone's search whether or not anyone
+ * has opened a screen since.
  */
 public class RoomOsApp extends Application {
 
     private static int resumed = 0;
     private static Runnable listener;
+    private DialServer dial;
 
     static boolean inForeground() { return resumed > 0; }
 
@@ -24,6 +30,8 @@ public class RoomOsApp extends Application {
 
     @Override public void onCreate() {
         super.onCreate();
+        dial = new DialServer(this);
+        dial.start();
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override public void onActivityResumed(Activity a) {
                 resumed++;

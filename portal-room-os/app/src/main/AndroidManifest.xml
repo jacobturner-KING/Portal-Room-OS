@@ -53,6 +53,12 @@
             android:screenOrientation="landscape"
             android:windowSoftInputMode="adjustPan"
             android:exported="false" />
+        <activity
+            android:name=".YouTubeActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:screenOrientation="landscape"
+            android:launchMode="singleTop"
+            android:exported="false" />
         <service
             android:name=".LibrespotService"
             android:exported="false"

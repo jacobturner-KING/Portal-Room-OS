@@ -1,0 +1,38 @@
+<!-- The YouTube TV site fills the panel; two chips float over it on the same
+     surfaces as everywhere else. The OS chip is the way back (there is no back
+     key), placed where the floating overlay chip lives on other screens. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <WebView
+        android:id="@+id/web"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <TextView
+        android:id="@+id/osChip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="14dp"
+        android:background="@drawable/chip_bg"
+        android:gravity="center"
+        android:minWidth="64dp"
+        android:minHeight="44dp"
+        android:text="OS"
+        android:textColor="@color/accent"
+        android:textSize="17sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="18dp"
+        android:background="@drawable/chip_bg"
+        android:text="Loading YouTube…"
+        android:textColor="@color/muted"
+        android:textSize="13sp" />
+</FrameLayout>

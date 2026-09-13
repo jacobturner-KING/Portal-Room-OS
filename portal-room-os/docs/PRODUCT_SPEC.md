@@ -57,6 +57,9 @@ Turn a discontinued Meta Portal into a locally intelligent room interface: an am
 - Transit: live ferries both directions (plus an optional passenger water taxi)
   and real-time bus arrivals for the configured stops, glanceable before leaving
   the house
+- YouTube: the Portal is a cast target in the phone's YouTube app; a cast
+  brings the video to the wall over the dashboard, and the dashboard comes back
+  when it is done
 
 ### Voice
 Phase 1: push-to-talk.
