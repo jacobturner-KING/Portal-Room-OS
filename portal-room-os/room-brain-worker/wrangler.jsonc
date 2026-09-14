@@ -8,6 +8,9 @@
     "enabled": true,
     "head_sampling_rate": 1
   },
+  // Workers AI: transcribes recordings made on the Portal (Whisper) and, with no
+  // Claude key set, names them and answers questions about them.
+  "ai": { "binding": "AI" },
   "kv_namespaces": [
     {
       "binding": "ROOM_KV",

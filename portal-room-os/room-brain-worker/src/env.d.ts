@@ -4,6 +4,9 @@
 interface Env {
   // KV binding (wrangler.jsonc -> kv_namespaces[].binding)
   ROOM_KV: KVNamespace;
+  // Workers AI (wrangler.jsonc -> ai.binding): Whisper for Portal recordings,
+  // and a text model for naming and chatting about them without a Claude key.
+  AI?: Ai;
 
   // Non-secret vars (wrangler.jsonc -> vars)
   WEATHER_LAT?: string;
@@ -26,4 +29,6 @@ interface Env {
   HA_URL?: string;
   HA_TOKEN?: string;
   OBA_API_KEY?: string;
+  /** Claude, for the Meetings screen's chat over one meeting. */
+  ANTHROPIC_API_KEY?: string;
 }

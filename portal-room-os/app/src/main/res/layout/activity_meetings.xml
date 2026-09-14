@@ -1,0 +1,205 @@
+<!-- Meetings: Granola's list down the left, one meeting on the right with its
+     notes, transcript, or a chat about it. The chat input sits at the bottom
+     of the right panel so the soft keyboard pans the window rather than
+     covering it. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="68dp"
+        android:background="@drawable/bar_bg"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <Button android:id="@+id/backBtn" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="56dp" android:background="@drawable/button_bg" android:text="‹" android:textColor="@color/text" android:textSize="24sp" android:textAllCaps="false" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="Meetings"
+            android:textColor="@color/text"
+            android:textSize="23sp"
+            android:textStyle="bold" />
+        <EditText
+            android:id="@+id/searchInput"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/button_bg"
+            android:hint="Search titles"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:singleLine="true"
+            android:textColor="@color/text"
+            android:textColorHint="@color/muted"
+            android:textSize="16sp" />
+        <com.portalroomos.LevelMeterView
+            android:id="@+id/recordMeter"
+            android:layout_width="84dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="10dp"
+            android:visibility="gone" />
+        <TextView
+            android:id="@+id/recordChip"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/button_bg"
+            android:gravity="center"
+            android:minWidth="120dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:text="● Record"
+            android:textColor="@color/text"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+        <Button android:id="@+id/refreshBtn" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="96dp" android:background="@drawable/button_bg" android:text="Refresh" android:textColor="@color/text" android:textAllCaps="false" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <ScrollView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.85"
+            android:background="@drawable/panel_flat_bg"
+            android:scrollbars="none">
+            <LinearLayout
+                android:id="@+id/meetingList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="6dp"
+                android:paddingBottom="14dp" />
+        </ScrollView>
+
+        <Space android:layout_width="14dp" android:layout_height="1dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.35"
+            android:background="@drawable/panel_flat_bg"
+            android:orientation="vertical"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/detailTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="Ask across every meeting"
+                        android:textColor="@color/text"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/detailMeta"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="Pick a meeting on the left, or ask Granola a question below"
+                        android:textColor="@color/muted"
+                        android:textSize="14sp" />
+                </LinearLayout>
+                <Button android:id="@+id/notesTab" android:layout_width="wrap_content" android:layout_height="44dp" android:layout_marginStart="10dp" android:minWidth="84dp" android:background="@drawable/button_bg" android:text="Notes" android:textColor="@color/text" android:textAllCaps="false" />
+                <Button android:id="@+id/transcriptTab" android:layout_width="wrap_content" android:layout_height="44dp" android:layout_marginStart="8dp" android:minWidth="84dp" android:background="@drawable/button_bg" android:text="Transcript" android:textColor="@color/text" android:textAllCaps="false" />
+                <Button android:id="@+id/chatTab" android:layout_width="wrap_content" android:layout_height="44dp" android:layout_marginStart="8dp" android:minWidth="84dp" android:background="@drawable/button_bg" android:text="Chat" android:textColor="@color/text" android:textAllCaps="false" />
+            </LinearLayout>
+
+            <ScrollView
+                android:id="@+id/bodyScroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="10dp"
+                android:scrollbars="none">
+                <LinearLayout
+                    android:id="@+id/bodyList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingBottom="8dp">
+                    <TextView
+                        android:id="@+id/bodyText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineSpacingExtra="4dp"
+                        android:text=""
+                        android:textColor="@color/text"
+                        android:textIsSelectable="false"
+                        android:textSize="16sp" />
+                    <LinearLayout
+                        android:id="@+id/chatList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </ScrollView>
+
+            <LinearLayout
+                android:id="@+id/chatRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <EditText
+                    android:id="@+id/chatInput"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/button_bg"
+                    android:hint="Ask about this meeting"
+                    android:imeOptions="actionSend"
+                    android:inputType="textCapSentences"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:singleLine="true"
+                    android:textColor="@color/text"
+                    android:textColorHint="@color/muted"
+                    android:textSize="16sp" />
+                <Button android:id="@+id/sendBtn" android:layout_width="wrap_content" android:layout_height="52dp" android:layout_marginStart="8dp" android:minWidth="84dp" android:background="@drawable/button_bg" android:text="Send" android:textColor="@color/accent" android:textAllCaps="false" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/chip_bg"
+        android:text=""
+        android:textColor="@color/muted"
+        android:textSize="12sp" />
+</LinearLayout>

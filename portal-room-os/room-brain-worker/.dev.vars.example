@@ -27,6 +27,11 @@ HA_TOKEN=""
 # OneBusAway Puget Sound API key for the Transit screen (optional; "TEST" is used otherwise)
 OBA_API_KEY=""
 
+# Optional. The Meetings screen's chat runs on Granola's own AI. Set this and
+# Claude answers questions about the open meeting instead, from its full
+# transcript. Granola itself needs no secret: link it on /connect.
+ANTHROPIC_API_KEY=""
+
 # Transit screen: which terminals, stops and routes to show. Leave it unset and
 # the Transit screen simply says it is not configured. One line of JSON; single
 # quotes so the inner quotes survive.

@@ -18,9 +18,18 @@ a credential.
 | `GET /api/calendar/event?calendarId=&id=` | bearer | One event |
 | `POST /api/calendar/event/update` | bearer | `{calendarId,id,title?,location?,description?,allDay?,start?,end?}` (needs the edit scope) |
 | `GET /api/calendar/days?start=&end=&tz=` | bearer | Event counts per local day (year view) |
-| `GET /connect?admin=<ADMIN_TOKEN>` | admin | One-time page to link Spotify / Google |
-| `GET /auth/{spotify,google}/start` | admin cookie | Begins OAuth |
-| `GET /auth/{spotify,google}/callback` | state param | OAuth return |
+| `GET /api/meetings?search=&limit=` | bearer | Granola meetings and Portal recordings in one list, newest first (`source` says which); `granola: false` when unlinked |
+| `GET /api/meetings/notes?id=` | bearer | One meeting's notes, as Granola wrote them |
+| `GET /api/meetings/transcript?id=` | bearer | One meeting's transcript |
+| `POST /api/meetings/chat` | bearer | `{meetingId?,title?,date?,messages:[{role,content}]}`; Granola's own AI answers (pinned to the meeting when one is given), or Claude for the per-meeting case when `ANTHROPIC_API_KEY` is set; `source` says which |
+| `PUT /api/recordings/<id>/chunk?seq=N&startedAt=ISO` | bearer | One 16 kHz mono WAV chunk of a Portal recording; transcribed (Workers AI Whisper) before answering |
+| `POST /api/recordings/<id>/finish` | bearer | `{durationSec}`; stitches the transcript, names and summarises the recording |
+| `GET /api/recordings/<id>` | bearer | The recording's record |
+| `DELETE /api/recordings/<id>` | bearer | Removes it and its transcript |
+| `GET /connect?admin=<ADMIN_TOKEN>` | admin | One-time page to link Spotify / Google / Granola |
+| `GET /admin/granola?admin=&tool=&args=` | admin | Granola's live tool schemas, and one raw tool call for tuning the parsers |
+| `GET /auth/{spotify,google,granola}/start` | admin cookie | Begins OAuth |
+| `GET /auth/{spotify,google,granola}/callback` | state param | OAuth return |
 
 ## Secrets and configuration
 
@@ -30,7 +39,12 @@ Local dev reads `.dev.vars`. Production uses `wrangler secret put <NAME>`:
 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MAJOR_KEY_URL`, `MAJOR_KEY_KEY`,
 `HA_URL`, `HA_TOKEN` (Home Assistant base URL reachable from the Worker, e.g. via a
 Cloudflare Tunnel, plus a long-lived access token), `OBA_API_KEY` (OneBusAway Puget
-Sound key; the documented `TEST` key is used until it is set).
+Sound key; the documented `TEST` key is used until it is set). `ANTHROPIC_API_KEY` (optional) to have
+Claude, rather than Granola's own AI, answer the Meetings screen's questions about one
+meeting. Granola needs no secret: the Worker registers itself with Granola's OAuth server
+on the first link from `/connect`.
+
+Bindings: `ROOM_KV` (KV) and `AI` (Workers AI, for Portal recordings), both in `wrangler.jsonc`.
 
 Non-secret vars (`WEATHER_LAT`, `WEATHER_LON`, `WEATHER_LABEL`) live in `wrangler.jsonc`.
 Leave them empty and the Worker geolocates the Portal's own requests (Cloudflare `request.cf`,

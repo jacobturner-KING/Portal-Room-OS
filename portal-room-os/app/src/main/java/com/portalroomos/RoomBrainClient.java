@@ -278,6 +278,140 @@ public class RoomBrainClient {
         }).start();
     }
 
+    // ---- Meetings (Granola) ----
+    public static class Meeting {
+        public String id, title, date, summary;
+        public List<String> attendees = new ArrayList<>();
+        /** "granola", or "portal" for a recording made on this device. */
+        public String source = "granola";
+        public int durationSec;
+        /** Portal recordings: "recording" while the mic is live, "done" after. */
+        public String status = "done";
+        public boolean isPortal() { return "portal".equals(source); }
+    }
+    public static class MeetingList {
+        public List<Meeting> meetings = new ArrayList<>();
+        /** What Granola actually said, for when the list could not be parsed out of it. */
+        public String raw = "";
+        /** False when Granola is not linked; Portal recordings still come through. */
+        public boolean granola = true;
+    }
+    public static class ChatTurn {
+        public final String role, content;
+        public ChatTurn(String role, String content) { this.role = role; this.content = content; }
+    }
+    public static class ChatReply {
+        public String reply;
+        /** Who answered: "granola" (its own AI) or "claude". */
+        public String source;
+    }
+
+    public void getMeetings(String search, Callback<MeetingList> cb) {
+        new Thread(() -> {
+            try {
+                String path = "/api/meetings?limit=200";
+                if (search != null && !search.trim().isEmpty()) path += "&search=" + URLEncoder.encode(search.trim(), "UTF-8");
+                JSONObject j = new JSONObject(httpGet(path));
+                if (j.has("error")) throw new Exception(j.optString("error"));
+                MeetingList r = new MeetingList();
+                r.raw = j.optString("raw", "");
+                r.granola = j.optBoolean("granola", true);
+                JSONArray arr = j.optJSONArray("meetings");
+                for (int i = 0; arr != null && i < arr.length(); i++) {
+                    JSONObject o = arr.optJSONObject(i);
+                    if (o == null) continue;
+                    Meeting m = new Meeting();
+                    m.id = optStr(o, "id");
+                    m.title = optStr(o, "title");
+                    m.date = optStr(o, "date");
+                    m.summary = optStr(o, "summary");
+                    m.source = o.optString("source", "granola");
+                    m.durationSec = o.optInt("durationSec", 0);
+                    m.status = o.optString("status", "done");
+                    JSONArray a = o.optJSONArray("attendees");
+                    for (int k = 0; a != null && k < a.length(); k++) m.attendees.add(a.optString(k));
+                    r.meetings.add(m);
+                }
+                cb.onResult(r, null);
+            } catch (Exception e) { cb.onResult(null, e); }
+        }).start();
+    }
+
+    public void getMeetingNotes(String id, Callback<String> cb) {
+        fetchText("/api/meetings/notes?id=", id, "notes", cb);
+    }
+
+    public void getMeetingTranscript(String id, Callback<String> cb) {
+        fetchText("/api/meetings/transcript?id=", id, "transcript", cb);
+    }
+
+    private void fetchText(String pathPrefix, String id, String field, Callback<String> cb) {
+        new Thread(() -> {
+            try {
+                JSONObject j = new JSONObject(httpGet(pathPrefix + URLEncoder.encode(id, "UTF-8")));
+                if (j.has("error")) throw new Exception(j.optString("error"));
+                cb.onResult(j.optString(field, ""), null);
+            } catch (Exception e) { cb.onResult(null, e); }
+        }).start();
+    }
+
+    /**
+     * One question. Granola's own AI answers by default, across every meeting or
+     * pinned to the given one; the Worker hands it to Claude instead when it has
+     * a key for that, and says which in the reply.
+     */
+    public void chatMeeting(Meeting meeting, List<ChatTurn> history, Callback<ChatReply> cb) {
+        new Thread(() -> {
+            try {
+                JSONObject req = new JSONObject();
+                if (meeting != null) {
+                    req.put("meetingId", meeting.id);
+                    req.put("title", meeting.title == null ? "" : meeting.title);
+                    req.put("date", meeting.date == null ? "" : meeting.date);
+                }
+                JSONArray turns = new JSONArray();
+                for (ChatTurn t : history) turns.put(new JSONObject().put("role", t.role).put("content", t.content));
+                req.put("messages", turns);
+                JSONObject j = new JSONObject(httpPostJson("/api/meetings/chat", req.toString()));
+                if (j.has("error")) throw new Exception(j.optString("error"));
+                ChatReply r = new ChatReply();
+                r.reply = j.optString("reply", "");
+                r.source = j.optString("source", "granola");
+                cb.onResult(r, null);
+            } catch (Exception e) { cb.onResult(null, e); }
+        }).start();
+    }
+
+    // ---- Portal recordings (blocking; RecorderService calls these off its own thread) ----
+
+    /** One WAV chunk up; the Worker transcribes it before answering. Throws on any failure. */
+    public void uploadChunkSync(String id, int seq, String startedAtIso, byte[] wav) throws Exception {
+        String path = "/api/recordings/" + id + "/chunk?seq=" + seq
+            + "&startedAt=" + URLEncoder.encode(startedAtIso, "UTF-8");
+        HttpURLConnection c = open(path, "PUT");
+        c.setReadTimeout(180000);   // Whisper on a three-minute chunk
+        c.setRequestProperty("Content-Type", "audio/wav");
+        c.setFixedLengthStreamingMode(wav.length);
+        c.setDoOutput(true);
+        try (OutputStream out = c.getOutputStream()) { out.write(wav); }
+        JSONObject j = new JSONObject(read(c));
+        if (!j.optBoolean("ok", false)) throw new Exception(j.optString("error", "chunk rejected"));
+    }
+
+    /** Stitches and names the recording; returns the title. */
+    public String finishRecordingSync(String id, long durationSec) throws Exception {
+        HttpURLConnection c = open("/api/recordings/" + id + "/finish", "POST");
+        c.setReadTimeout(120000);   // naming runs a language model
+        c.setRequestProperty("Content-Type", "application/json");
+        c.setDoOutput(true);
+        try (OutputStream out = c.getOutputStream()) {
+            out.write(new JSONObject().put("durationSec", durationSec).toString().getBytes(StandardCharsets.UTF_8));
+        }
+        JSONObject j = new JSONObject(read(c));
+        if (!j.optBoolean("ok", false)) throw new Exception(j.optString("error", "finish rejected"));
+        return j.optString("title", "Recording");
+    }
+
     // ---- Parsing helpers ----
     private static List<Track> parseTracks(JSONArray arr) {
         List<Track> out = new ArrayList<>();
@@ -341,7 +475,10 @@ public class RoomBrainClient {
         HttpURLConnection c = (HttpURLConnection) new URL(baseUrl + path).openConnection();
         c.setConnectTimeout(6000);
         // Calendar range queries fan out to every Google calendar; give them longer.
-        c.setReadTimeout(path.startsWith("/api/calendar/") || path.startsWith("/api/transit") ? 35000 : 12000);
+        // A meeting question carries a whole transcript to Claude, longer still.
+        c.setReadTimeout(path.startsWith("/api/meetings/chat") ? 120000
+            : path.startsWith("/api/calendar/") || path.startsWith("/api/transit") || path.startsWith("/api/meetings") ? 35000
+            : 12000);
         c.setRequestMethod(method);
         c.setRequestProperty("Authorization", "Bearer " + authToken);
         return c;

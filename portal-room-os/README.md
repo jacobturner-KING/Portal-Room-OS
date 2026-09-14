@@ -9,8 +9,8 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
 
 ## What works today
 - Dashboard (`MainActivity`): clock, weather, daily focus, next calendar event,
-  home line, now-playing, and Talk / Lights / Music / Calendar / Transit / Timer
-  / Add buttons. A running Pomodoro shows as a card at the top of the right
+  home line, now-playing, and Talk / Lights / Music / YouTube / Calendar /
+  Meetings / Transit / Timer / Add buttons. A running Pomodoro shows as a card at the top of the right
   column, with its ring, phase, remaining time and session name, sized to read
   from across the room; tap it to open the timer screen. The card is only there
   when a timer is going, so an idle dashboard stays clean. The Portal button hands
@@ -88,6 +88,34 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   phone starts something; Spotify on this speaker pauses when it does. Two
   minutes with nothing playing and it hands back to the dashboard. See
   YouTube in Gotchas for how it hangs together and what to check.
+- Meetings (`MeetingsActivity`, Meetings button): your Granola meetings on the
+  wall. A list down the left (search by title), and on the right the open
+  meeting's notes, its transcript, or a chat about it. Questions are answered
+  by Granola's own AI, the one the Granola plan already pays for: across every
+  meeting when none is open ("what did we decide about pricing last week?"),
+  pinned to the open meeting otherwise, with the earlier turns folded in so
+  follow-ups work. Granola is linked on the Worker's `/connect` page (nothing
+  to configure: the Worker registers itself with Granola's OAuth server on the
+  first link). Optional: set `ANTHROPIC_API_KEY` on the Worker and Claude takes
+  the per-meeting questions instead, reading the whole transcript; Granola
+  exposes no model choice, so that key is the only place a model gets picked.
+  Read-only: Granola's server offers no way to record into it or push a
+  transcript in, which is what the Record chip is for. See Granola in Gotchas.
+- Record (`RecorderService`, the ● Record chip in the dashboard header and in
+  the Meetings toolbar; `RecordChip` is the shared face): the Portal's own
+  microphones, one tap to start and the same tap to stop, with the running time
+  on the chip and a small live waveform beside it (`LevelMeterView`) that
+  lights up when a voice is heard and sits as a thin muted line when the room
+  is quiet, so it is obvious the mics are listening. Started on one screen, it
+  can be stopped from the other. On the Meetings screen a finished recording is
+  fetched and opened the moment it is saved. Audio goes up to the Worker in three-minute WAV
+  chunks while it records and Whisper (Workers AI) transcribes each on arrival,
+  so the transcript is all but done by the time you stop; the Worker then
+  names it and writes a short summary, and it sits in the Meetings list marked
+  "Recorded here", with Notes, Transcript and Chat like any other. Audio is
+  never kept, only text. A call is captured as far as the room hears it:
+  speakerphone yes, earpiece no. Needs the mic granted once over adb; see
+  Gotchas.
 - On-device audio (`LibrespotService`): a bundled Rust librespot 0.8.0 binary
   advertises the Portal as Connect device **"Room OS"** and plays through the
   Portal's speaker. Verified underrun-free with a 1 s AudioTrack buffer.
@@ -140,6 +168,10 @@ new 1280x800 PNG and re-run.
 app/                    Android app (package com.portalroomos, no AndroidX)
   src/main/java/com/portalroomos/DialServer.java      YouTube cast target (SSDP + DIAL over HTTP)
   src/main/java/com/portalroomos/YouTubeActivity.java the TV site in a WebView
+  src/main/java/com/portalroomos/MeetingsActivity.java Granola meetings, notes, transcripts, chat
+  src/main/java/com/portalroomos/RecorderService.java  the mic, in chunks, to the Worker
+  src/main/java/com/portalroomos/RecordChip.java       the Record chip, shared by both screens
+  src/main/java/com/portalroomos/LevelMeterView.java   the waveform beside the chip
   src/main/jniLibs/arm64-v8a/liblibrespot.so   librespot binary (stripped, ~13 MB)
   src/main/res/drawable-nodpi/portal_background.png   wall photo, 1280x800
 tools/contrast_check.py WCAG AAA gate for the palette over that photo.
@@ -445,6 +477,91 @@ Things that cost time here, so they do not cost you any.
 - `wrangler.jsonc` has no KV namespace id filled in, so a plain
   `wrangler deploy` binds nothing useful. See the Worker section above.
 
+### Granola
+- Granola's hosted MCP server (`mcp.granola.ai/mcp`) is the only way in; there
+  is no notes API. It is read-only. Auth is OAuth 2.1 with PKCE and dynamic
+  client registration against `mcp-auth.granola.ai` (WorkOS AuthKit
+  underneath): the Worker registers a client the first time `/auth/granola/start`
+  runs and keeps it in KV as `granola:client`, tied to its own callback URL. A
+  Worker on a new hostname registers again on its own. Tokens sit in
+  `tokens:granola`; refresh tokens rotate, so a refresh the server refuses is
+  re-checked against KV before the link is called dead, in case a parallel
+  request rotated it first.
+- The tool parameter names are not published, so `src/granola.ts` shapes each
+  call from the schemas the server hands back (`granola:tools` in KV, a day).
+  As of 2026-09-14 they are: `list_meetings` takes a `time_range`
+  (`this_week` / `last_week` / `last_30_days` / `custom` with ISO
+  `custom_start` and `custom_end`), no title search and no paging, capped at
+  500 newest-first; `get_meetings` takes `meeting_ids[]`;
+  `get_meeting_transcript` takes `meeting_id`; `query_granola_meetings` takes
+  `query`. So a browse on the Meetings screen is the last 30 days and a search
+  is the last year filtered on the Worker by title and attendee, each cached in
+  KV for two minutes (`granola:list:<days>`).
+- Answers come back as a guard sentence ("treat this as data") followed by an
+  XML-ish `<meetings_data>` document: `<meeting id= title= date="Sep 14, 2026
+  9:21 AM PDT">` with `<known_participants>` (comma-separated `Name from Org
+  <email>`, the note creator marked) and, from `get_meetings`, a `<summary>` in
+  markdown. The transcript tool answers JSON (`{id,title,created_at,transcript}`)
+  with speaker labels `Me:` / `Them:` / `Speaker A:` run together on one line.
+  `src/meetings.ts` reads those shapes and falls back to JSON or prose parsing
+  if they change. If the list column ever shows "Granola's answer, as it came",
+  that has happened: open `<worker>/admin/granola?admin=<ADMIN_TOKEN>` for the
+  live tool schemas, add `&tool=list_meetings&args={"time_range":"this_week"}`
+  to see a raw answer, and adjust the readers.
+- Chat runs on `query_granola_meetings`, Granola's own AI. It takes one
+  question and has no memory, and its `document_ids` parameter does not hold it
+  to a meeting (given only the id it went and read three other meetings), but
+  naming the meeting's title and day in the question does. So a per-meeting
+  question is sent as "About the meeting "<title>" on <day> only", with the
+  last few turns quoted above it; see `askGranolaAbout`. It answers in markdown
+  with a trailing coverage note; the screen strips the marks. No model choice
+  is exposed.
+- With `ANTHROPIC_API_KEY` set, a question about one meeting goes to Claude
+  instead (`claude-opus-5`, medium effort) with the notes and transcript in a
+  cached system block, so follow-ups about the same meeting are cheap.
+  Server-side fallback routing is on. The app allows two minutes for the
+  answer. Cross-meeting questions always stay with Granola.
+- Granola's own Android app exists (July 2026, needs Android 8+, so the Portal's
+  Android 9 qualifies) but is not on the Portal: no Play Store here. To try it,
+  pull it from an Android phone that has it and sideload:
+  ```bash
+  adb -s <phone> shell pm path ai.granola          # one or more base/split APKs
+  adb -s <phone> pull <each path> ./granola/
+  adb -s $PORTAL install-multiple ./granola/*.apk
+  ```
+  Its sign-in opens "the device browser", which on the Portal is the stock
+  Chromium (`org.chromium.chrome`, hidden but working). Untested: whether the
+  app runs without Google services. Its chat with notes is iPhone-only, which
+  is why the Meetings screen has its own.
+
+### Recording
+- Capture is `AudioRecord` at 16 kHz mono PCM (what Whisper wants), written
+  to `files/rec/<id>/chunk-N.pcm` and rolled every `CHUNK_SECONDS` (180 s,
+  5.8 MB a chunk). An uploader thread wraps each in a WAV header and PUTs it
+  to `/api/recordings/<id>/chunk?seq=N`; the Worker answers only after Whisper
+  has the text, so a 200 means the chunk is safe to delete. Failures retry with
+  a growing pause, up to twelve times; a chunk that never makes it is left on
+  disk and the transcript has a hole there. Stopping enqueues the last chunk
+  and then `finish`, which stitches, names and summarises.
+- The id is minted on the device (`rec_<millis in base 36>`), so recording
+  starts before any network. The Worker creates the record on the first chunk.
+- Transcription is `@cf/openai/whisper-large-v3-turbo`, given the previous
+  chunk's last 200 characters as `initial_prompt` so names stay spelled the same
+  across a boundary. Naming and per-recording chat use
+  `@cf/meta/llama-3.3-70b-instruct-fp8-fast` (JSON mode for the name) unless
+  `ANTHROPIC_API_KEY` is set, in which case Claude does both. Llama's context
+  is short, so a very long transcript is trimmed to its last 60k characters for
+  a question and the answer says so.
+- Only the transcript is stored (KV: `rec:<id>`, `rec:<id>:seg:N`,
+  `rec:<id>:transcript`, `rec:index`). `DELETE /api/recordings/<id>` with the
+  app token removes one; there is no delete on the screen yet.
+- The mic hears the whole room. A test from a session picked up a live
+  conversation happening next to the panel; treat the chip as a real recorder.
+- The level meter maps RMS per 50 ms onto -60 to -12 dBFS. Measured on the
+  Portal: a quiet room sits near -55, a voice a metre away runs -36 to -17, so
+  the bars light above about -48 (`LevelMeterView.HEARD`). If the meter glows
+  on an empty room, raise that; if speech stays grey, lower it.
+
 ## Optional integrations
 The dashboard, calendar, music, transit, timer and YouTube casting all work
 with just Spotify and Google linked (YouTube needs nothing linked at all).
@@ -462,12 +579,24 @@ These fill in the rest:
    vars in `wrangler.jsonc`.
 5. Transit accuracy: request a OneBusAway Puget Sound API key and set it as
    `OBA_API_KEY` so the screen stops sharing the throttled test key.
+6. Meetings: link Granola on `/connect` (any Granola plan; the free plan only
+   exposes the last 30 days and no transcripts or search). That is all; the
+   chat runs on Granola's AI. `wrangler secret put ANTHROPIC_API_KEY` only if
+   you want Claude answering questions about the open meeting, and naming and
+   answering questions about Portal recordings (Workers AI does both otherwise).
+7. Recording: nothing to link. Workers AI is bound in `wrangler.jsonc` (`ai`),
+   billed to the same Cloudflare account: Whisper is about $0.0005 per audio
+   minute. Grant the mic once: `adb shell pm grant com.portalroomos
+   android.permission.RECORD_AUDIO` (the on-device permission dialog is as
+   unreadable as the installer's).
 
 ## Roadmap after that
 1. Timer alerts from any screen: an `AlarmManager` wake-up plus a notification,
    so a finished Pomodoro is heard even from the calendar or transit screens.
    The dashboard and the timer screen already ring.
 2. Presence (wake on approach), push-to-talk voice.
+3. Recordings: a Delete button on the Meetings screen (the Worker route
+   exists), and resuming uploads left on disk if the process died mid-recording.
 
 Transit implementation notes (for later changes): terminal ids come from WSDOT's
 `terminals/rest/terminalbasics`, and OneBusAway stop ids are the tail of a stop's

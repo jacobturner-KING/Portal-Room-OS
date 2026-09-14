@@ -2,15 +2,24 @@ interface ConnectStatus {
   spotify: boolean;
   google: boolean;
   googleEdit: boolean;
+  granola: boolean;
+  /** A Granola grant exists but can no longer be refreshed. */
+  granolaStale: boolean;
+  /** ANTHROPIC_API_KEY is set, so the Meetings screen can chat. */
+  meetingChat: boolean;
   majorKey: boolean;
   homeAssistant: boolean;
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 function badge(ok: boolean): string {
   return ok ? "✅ connected" : "— not connected";
 }
 
-export function renderConnect(status: ConnectStatus): Response {
+export function renderConnect(status: ConnectStatus, error: string | null = null): Response {
   const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -23,6 +32,7 @@ export function renderConnect(status: ConnectStatus): Response {
     h1 { font-size: 20px; margin: 0 0 4px; }
     .muted { color:#a6adbd; font-size:14px; }
     .card { background:#191d27; border-radius:14px; padding:18px 20px; margin:16px 0; }
+    .err { background:#3a1d22; border:1px solid #ffaaaa; color:#ffd6d6; border-radius:14px; padding:14px 18px; margin:16px 0; }
     a.btn { display:inline-block; background:#8aa4ff; color:#0b0d12; text-decoration:none;
             padding:10px 16px; border-radius:10px; font-weight:600; margin-top:10px; }
   </style>
@@ -31,6 +41,7 @@ export function renderConnect(status: ConnectStatus): Response {
   <main>
     <h1>Portal Room Brain</h1>
     <p class="muted">Link your accounts once. Tokens are stored server-side; the Portal never sees them.</p>
+    ${error ? `<div class="err">${escapeHtml(error)}</div>` : ""}
 
     <div class="card">
       <b>Spotify</b> — ${badge(status.spotify)}<br />
@@ -42,6 +53,23 @@ export function renderConnect(status: ConnectStatus): Response {
                 status.google ? (status.googleEdit ? " · can edit events" : " · read-only, reconnect to allow editing") : ""
               }<br />
       <a class="btn" href="/auth/google/start">${status.google ? "Reconnect" : "Connect"} Google</a>
+    </div>
+
+    <div class="card">
+      <b>Granola</b> — ${
+        status.granola ? badge(true) : status.granolaStale ? "⚠️ link expired, reconnect" : badge(false)
+      }<br />
+      <span class="muted">Meeting notes and transcripts for the Meetings screen, through Granola's MCP server
+      (read-only). The Worker registers itself as a client the first time; nothing to configure.</span><br />
+      <a class="btn" href="/auth/granola/start">${status.granola ? "Reconnect" : "Connect"} Granola</a>
+    </div>
+
+    <div class="card">
+      <b>Meeting chat</b> — ${status.meetingChat ? "Claude answers about an open meeting" : "Granola's own AI answers everything"}<br />
+      <span class="muted">Granola's AI is part of the Granola plan and needs no key: it answers across every
+      meeting, or pinned to the open one. Set ANTHROPIC_API_KEY as a Worker secret only if you want Claude
+      (claude-opus-5) to take questions about the open meeting instead: it reads the whole transcript and
+      keeps the conversation. Granola exposes no model choice.</span>
     </div>
 
     <div class="card">

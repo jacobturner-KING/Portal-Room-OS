@@ -20,6 +20,7 @@ public class MainActivity extends Activity {
     private TextView time, date, weather, presence, focus, nextEvent, reminder, homeSummary, music, status;
     private TextView timerPhase, timerTime, timerName;
     private View timerCard, timerSpace;
+    private RecordChip recordChip;
     private TimerProgressView timerRing;
     /** The same Pomodoro the timer screen drives; reloaded whenever we resume. */
     private TimerState timer = new TimerState();
@@ -48,6 +49,7 @@ public class MainActivity extends Activity {
         timerPhase = findViewById(R.id.timerPhase);
         timerTime = findViewById(R.id.timerTime);
         timerName = findViewById(R.id.timerName);
+        recordChip = new RecordChip(this, findViewById(R.id.recordChip), findViewById(R.id.recordMeter), status);
 
         brain = new RoomBrainClient(Config.ROOM_BRAIN_URL, Config.APP_TOKEN);
         bindAction(R.id.voice, "voice");
@@ -62,6 +64,8 @@ public class MainActivity extends Activity {
             startActivity(new Intent(this, CalendarActivity.class));
         findViewById(R.id.calendarBtn).setOnClickListener(openCalendar);
         nextEvent.setOnClickListener(openCalendar);
+        findViewById(R.id.meetingsBtn).setOnClickListener(v ->
+            startActivity(new Intent(this, MeetingsActivity.class)));
         findViewById(R.id.transitBtn).setOnClickListener(v ->
             startActivity(new Intent(this, TransitActivity.class)));
         View.OnClickListener openTimer = v ->
@@ -167,9 +171,15 @@ public class MainActivity extends Activity {
             time.setText(new SimpleDateFormat("h:mm", Locale.getDefault()).format(now));
             date.setText(new SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(now));
             refreshTimerCard();
+            recordChip.refresh();
             handler.postDelayed(this, 1000);
         }
     };
+
+    @Override public void onRequestPermissionsResult(int code, String[] perms, int[] results) {
+        super.onRequestPermissionsResult(code, perms, results);
+        recordChip.onPermissionResult(code, results);
+    }
 
     private final Runnable stateTick = new Runnable() {
         @Override public void run() {

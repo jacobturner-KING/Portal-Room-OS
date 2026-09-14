@@ -34,6 +34,30 @@
                 android:textSize="18sp" />
         </LinearLayout>
 
+        <!-- The room's own recorder. One tap starts, the same tap stops; the
+             chip carries the running time so it can be read from the door. -->
+        <com.portalroomos.LevelMeterView
+            android:id="@+id/recordMeter"
+            android:layout_width="84dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="12dp"
+            android:visibility="gone" />
+        <TextView
+            android:id="@+id/recordChip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="22dp"
+            android:background="@drawable/chip_bg"
+            android:gravity="center"
+            android:minWidth="120dp"
+            android:minHeight="48dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:text="● Record"
+            android:textColor="@color/text"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -224,15 +248,16 @@
         android:layout_marginTop="20dp"
         android:gravity="center"
         android:orientation="horizontal">
-        <Button android:id="@+id/voice" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="10dp" android:background="@drawable/button_bg" android:text="Talk" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
-        <Button android:id="@+id/lights" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="10dp" android:background="@drawable/button_bg" android:text="Lights" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
-        <Button android:id="@+id/musicBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="10dp" android:background="@drawable/button_bg" android:text="Music" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
-        <Button android:id="@+id/youtubeBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="10dp" android:background="@drawable/button_bg" android:text="YouTube" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
-        <Button android:id="@+id/calendarBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="10dp" android:background="@drawable/button_bg" android:text="Calendar" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
-        <Button android:id="@+id/transitBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="10dp" android:background="@drawable/button_bg" android:text="Transit" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
-        <Button android:id="@+id/timerBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="10dp" android:background="@drawable/button_bg" android:text="Timer" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
-        <Button android:id="@+id/add" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="10dp" android:background="@drawable/button_bg" android:text="Add" android:textColor="@color/text" android:textSize="18sp" android:textAllCaps="false" />
-        <Button android:id="@+id/portalBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginStart="10dp" android:background="@drawable/button_bg" android:text="Portal" android:textColor="@color/muted" android:textSize="18sp" android:textAllCaps="false" />
+        <Button android:id="@+id/voice" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="6dp" android:background="@drawable/button_bg" android:text="Talk" android:textColor="@color/text" android:textSize="17sp" android:textAllCaps="false" />
+        <Button android:id="@+id/lights" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="6dp" android:background="@drawable/button_bg" android:text="Lights" android:textColor="@color/text" android:textSize="17sp" android:textAllCaps="false" />
+        <Button android:id="@+id/musicBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="6dp" android:background="@drawable/button_bg" android:text="Music" android:textColor="@color/text" android:textSize="17sp" android:textAllCaps="false" />
+        <Button android:id="@+id/youtubeBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="6dp" android:background="@drawable/button_bg" android:text="YouTube" android:textColor="@color/text" android:textSize="17sp" android:textAllCaps="false" />
+        <Button android:id="@+id/calendarBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="6dp" android:background="@drawable/button_bg" android:text="Calendar" android:textColor="@color/text" android:textSize="17sp" android:textAllCaps="false" />
+        <Button android:id="@+id/meetingsBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="6dp" android:background="@drawable/button_bg" android:text="Meetings" android:textColor="@color/text" android:textSize="17sp" android:textAllCaps="false" />
+        <Button android:id="@+id/transitBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="6dp" android:background="@drawable/button_bg" android:text="Transit" android:textColor="@color/text" android:textSize="17sp" android:textAllCaps="false" />
+        <Button android:id="@+id/timerBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="6dp" android:background="@drawable/button_bg" android:text="Timer" android:textColor="@color/text" android:textSize="17sp" android:textAllCaps="false" />
+        <Button android:id="@+id/add" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginHorizontal="6dp" android:background="@drawable/button_bg" android:text="Add" android:textColor="@color/text" android:textSize="17sp" android:textAllCaps="false" />
+        <Button android:id="@+id/portalBtn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginStart="6dp" android:background="@drawable/button_bg" android:text="Portal" android:textColor="@color/muted" android:textSize="17sp" android:textAllCaps="false" />
     </LinearLayout>
 
     <TextView

@@ -21,9 +21,9 @@
 ┌──────────────────────── ROOM BRAIN ─────────────────────────┐
 │ Context aggregator + policy + action router                 │
 │                                                            │
-│ Home Assistant   Calendar   Weather   Music   Major Key     │
-│        │              │         │        │        │          │
-│        └──────────────┴─────────┴────────┴────────┘          │
+│ Home Assistant  Calendar  Weather  Music  Major Key  Granola│
+│        │            │        │       │       │        │     │
+│        └────────────┴────────┴───────┴───────┴────────┘     │
 │                             │                              │
 │                        AI model(s)                          │
 └────────────────────────────────────────────────────────────┘
@@ -39,8 +39,10 @@ Returns the room's glanceable state.
 ### POST /api/action
 Portal sends a structured action. Room Brain authenticates, applies safety rules, invokes the integration, and returns a human-readable result.
 
-`/api/transit`, `/api/calendar/*` and the `/connect` linking page round it out;
-`room-brain-worker/README.md` is the authoritative list.
+`/api/transit`, `/api/calendar/*`, `/api/meetings/*` (Granola, with Claude answering
+questions about one meeting: the first place the AI box in the diagram is real code) and
+the `/connect` linking page round it out; `room-brain-worker/README.md` is the
+authoritative list.
 
 ### Future /api/voice
 Portal uploads a short audio segment. Room Brain transcribes, routes intent, executes safe actions, and returns text + optional speech audio.
