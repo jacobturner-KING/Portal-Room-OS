@@ -9,7 +9,7 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
 
 ## What works today
 - Dashboard (`MainActivity`): clock, weather, daily focus, next calendar event,
-  home line, now-playing, and Talk / Lights / Music / YouTube / Calendar /
+  home line, now-playing, and Talk / Lights / Music / YouTube / Games / Calendar /
   Meetings / Transit / Timer / Add buttons. A running Pomodoro shows as a card at the top of the right
   column, with its ring, phase, remaining time and session name, sized to read
   from across the room; tap it to open the timer screen. The card is only there
@@ -101,6 +101,19 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   exposes no model choice, so that key is the only place a model gets picked.
   Read-only: Granola's server offers no way to record into it or push a
   transcript in, which is what the Record chip is for. See Granola in Gotchas.
+- Games (`GamesActivity`, Games button): a picker, then the game in a
+  full-panel WebView with a "‹ Games" chip back. The games are the Black
+  Lightning web builds (the Duke Nukem 1 rebrand in `../DukeNukem`, served at
+  `duke-nukem-1.<subdomain>.workers.dev`): the 1991 original in DOSBox, the
+  remaster lab, the 3D episode (controller only, no touch pad), and a
+  controller test page showing every button as the games read it. Controllers
+  work over Bluetooth ("Pair controller" opens the stock Android pairing
+  screen) or USB through an OTG adapter, and reach the page through the
+  Gamepad API. A PS5 pad gets its buttons corrected on the way (`DualSense`),
+  the PS / Home button returns to the picker, and no controller key is allowed
+  to fall through to Android (B would otherwise become Back mid-jump).
+  Leaving the screen pauses the game and its audio; coming back resumes it.
+  See Games in Gotchas.
 - Record (`RecorderService`, the ● Record chip in the dashboard header and in
   the Meetings toolbar; `RecordChip` is the shared face): the Portal's own
   microphones, one tap to start and the same tap to stop, with the running time
@@ -168,6 +181,8 @@ new 1280x800 PNG and re-run.
 app/                    Android app (package com.portalroomos, no AndroidX)
   src/main/java/com/portalroomos/DialServer.java      YouTube cast target (SSDP + DIAL over HTTP)
   src/main/java/com/portalroomos/YouTubeActivity.java the TV site in a WebView
+  src/main/java/com/portalroomos/GamesActivity.java    game picker + full-panel WebView
+  src/main/java/com/portalroomos/DualSense.java       PS5 controller button fix
   src/main/java/com/portalroomos/MeetingsActivity.java Granola meetings, notes, transcripts, chat
   src/main/java/com/portalroomos/RecorderService.java  the mic, in chunks, to the Worker
   src/main/java/com/portalroomos/RecordChip.java       the Record chip, shared by both screens
@@ -476,6 +491,27 @@ Things that cost time here, so they do not cost you any.
   `/api/transit` answers `configured: false` and the screen says so.
 - `wrangler.jsonc` has no KV namespace id filled in, so a plain
   `wrangler deploy` binds nothing useful. See the Worker section above.
+
+### Games
+- The Portal declares USB host and its USB-C port is dual-role, so a USB pad
+  wants a USB-A (female) to USB-C (male) OTG adapter. That port is also USB
+  adb: arm Wi-Fi adb first (`adb tcpip 5555`) if a session needs to watch.
+- A PS5 DualSense (054c:0ce6) pairs fine, but Android 9 has no layout for it
+  and the 4.4 kernel has no Sony driver, so it falls to `Generic.kl`: Square
+  reads as A, Cross as B, Circle as C, Triangle as X, L1 as Y, R1 as Z, and
+  browsers drop C and Z. `/system` is read-only on a locked Portal, so no
+  `.kl` can be added; `DualSense.fix` remaps by scan code (same table as the
+  Portal's own PS4 file) in `GamesActivity.dispatchKeyEvent`. Only inside the
+  Games screen: other apps still see the scrambled layout.
+- The controller test logs every change to logcat
+  (`adb logcat -s Games` shows `console: pad <id> buttons [..] axes [..]`),
+  so a new controller can be checked without looking at the panel.
+- WebView's onPause stops frames but not Web Audio, so the screen injects a
+  wrapper that keeps every AudioContext the page makes and suspends them on
+  pause (`AUDIO_JS`). Check with the devtools forward:
+  `window.__acs.map(c => c.state)` on the DOSBox page.
+- A DualSense remembers one host. Once paired to the Portal, it needs a USB
+  cable plugged into the PS5 and a press of PS to go back.
 
 ### Granola
 - Granola's hosted MCP server (`mcp.granola.ai/mcp`) is the only way in; there

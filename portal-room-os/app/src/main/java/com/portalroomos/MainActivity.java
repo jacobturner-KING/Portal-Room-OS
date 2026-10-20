@@ -59,6 +59,9 @@ public class MainActivity extends Activity {
         // Brought forward rather than started: the page may already be alive
         // behind us, holding a phone's connection.
         findViewById(R.id.youtubeBtn).setOnClickListener(v -> YouTubeActivity.open(this, null));
+        // Brought forward too, so a game left running is where you left it.
+        findViewById(R.id.gamesBtn).setOnClickListener(v -> startActivity(
+            new Intent(this, GamesActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)));
         bindAction(R.id.add, "add_item");
         View.OnClickListener openCalendar = v ->
             startActivity(new Intent(this, CalendarActivity.class));

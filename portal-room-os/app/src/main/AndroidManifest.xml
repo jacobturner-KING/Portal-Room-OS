@@ -65,6 +65,11 @@
             android:screenOrientation="landscape"
             android:launchMode="singleTop"
             android:exported="false" />
+        <activity
+            android:name=".GamesActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation"
+            android:screenOrientation="landscape"
+            android:exported="false" />
         <service
             android:name=".LibrespotService"
             android:exported="false"
