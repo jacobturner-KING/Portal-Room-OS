@@ -1,0 +1,18 @@
+<!-- A button that is switched on (mute, solo, click, the chosen loop length):
+     the same dark ground with an accent edge, so the label stays AAA. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/button_pressed" />
+            <stroke android:width="3dp" android:color="@color/accent" />
+            <corners android:radius="18dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/button_pressed" />
+            <stroke android:width="3dp" android:color="@color/accent" />
+            <corners android:radius="18dp" />
+        </shape>
+    </item>
+</selector>

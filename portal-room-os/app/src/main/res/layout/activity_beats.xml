@@ -1,0 +1,86 @@
+<!-- The beat machine. A transport bar, then either eight track rows
+     (BeatsActivity.buildRows) or the drum pads (buildPads), then a status line
+     for what the engine is doing: counting in, recording, syncing the mic. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="68dp"
+        android:background="@drawable/bar_bg"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <Button android:id="@+id/backBtn" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="56dp" android:background="@drawable/button_bg" android:text="‹" android:textColor="@color/text" android:textSize="24sp" android:textAllCaps="false" />
+        <!-- Steps or Pads: the same tracks, edited on the grid or played by hand. -->
+        <LinearLayout
+            android:id="@+id/modeGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:orientation="horizontal" />
+        <Button android:id="@+id/playBtn" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="116dp" android:background="@drawable/button_bg" android:text="▶ Play" android:textColor="@color/text" android:textSize="18sp" android:textStyle="bold" android:textAllCaps="false" />
+        <TextView
+            android:id="@+id/posText"
+            android:layout_width="84dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:text="–"
+            android:textColor="@color/text"
+            android:textSize="21sp"
+            android:textStyle="bold" />
+        <Button android:id="@+id/bpmDown" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="48dp" android:background="@drawable/button_bg" android:text="−" android:textColor="@color/text" android:textSize="22sp" android:textAllCaps="false" />
+        <Button android:id="@+id/bpmText" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="104dp" android:layout_marginHorizontal="4dp" android:background="@drawable/button_bg" android:text="100 BPM" android:textColor="@color/text" android:textSize="17sp" android:textAllCaps="false" />
+        <Button android:id="@+id/bpmUp" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="48dp" android:background="@drawable/button_bg" android:text="+" android:textColor="@color/text" android:textSize="22sp" android:textAllCaps="false" />
+        <LinearLayout
+            android:id="@+id/barsGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal" />
+        <Button android:id="@+id/swingBtn" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="120dp" android:layout_marginStart="12dp" android:background="@drawable/button_bg" android:text="Straight" android:textColor="@color/text" android:textSize="17sp" android:textAllCaps="false" />
+        <Button android:id="@+id/clickBtn" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="72dp" android:layout_marginStart="6dp" android:background="@drawable/button_bg" android:text="Click" android:textColor="@color/text" android:textSize="17sp" android:textAllCaps="false" />
+        <FrameLayout
+            android:id="@+id/meterSlot"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="10dp" />
+        <Button android:id="@+id/moreBtn" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="56dp" android:background="@drawable/button_bg" android:text="⋯" android:textColor="@color/text" android:textSize="22sp" android:textAllCaps="false" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/trackList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical" />
+
+    <!-- Pads mode: a grid of pads built in code (BeatsActivity.buildPads),
+         then the tap-recording controls. -->
+    <LinearLayout
+        android:id="@+id/padArea"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/chip_bg"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:text="Tap a pad to add a hit · hold it to accent · ● records a loop from the mic"
+        android:textColor="@color/muted"
+        android:textSize="14sp" />
+</LinearLayout>

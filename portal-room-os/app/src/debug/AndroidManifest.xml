@@ -1,0 +1,10 @@
+<!-- Debug builds only: the mic probe, reachable from adb. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <receiver android:name=".MicProbe" android:exported="true">
+            <intent-filter>
+                <action android:name="com.portalroomos.MIC_PROBE" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

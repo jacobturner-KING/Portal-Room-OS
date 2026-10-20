@@ -62,6 +62,8 @@ public class MainActivity extends Activity {
         // Brought forward too, so a game left running is where you left it.
         findViewById(R.id.gamesBtn).setOnClickListener(v -> startActivity(
             new Intent(this, GamesActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)));
+        findViewById(R.id.beatsBtn).setOnClickListener(v ->
+            startActivity(new Intent(this, BeatsActivity.class)));
         bindAction(R.id.add, "add_item");
         View.OnClickListener openCalendar = v ->
             startActivity(new Intent(this, CalendarActivity.class));

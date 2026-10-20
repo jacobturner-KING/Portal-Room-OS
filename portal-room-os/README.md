@@ -9,7 +9,7 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
 
 ## What works today
 - Dashboard (`MainActivity`): clock, weather, daily focus, next calendar event,
-  home line, now-playing, and Talk / Lights / Music / YouTube / Games / Calendar /
+  home line, now-playing, and Talk / Lights / Music / YouTube / Games / Beats / Calendar /
   Meetings / Transit / Timer / Add buttons. A running Pomodoro shows as a card at the top of the right
   column, with its ring, phase, remaining time and session name, sized to read
   from across the room; tap it to open the timer screen. The card is only there
@@ -114,6 +114,33 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   to fall through to Android (B would otherwise become Back mid-jump).
   Leaving the screen pauses the game and its audio; coming back resumes it.
   See Games in Gotchas.
+- Beats (`BeatsActivity`, Beats button): a beat machine to play guitar to.
+  Two views of the same tracks, switched at the top left. **Pads** (the
+  default): a big pad per step track (`PadView`), multi-touch, that sounds the
+  instant a finger lands, flashes when its track plays and shows its 16 steps
+  as dots. ● Rec taps turns the click on (with a bar of count-in if the beat is
+  stopped) and writes every tap into the loop on the nearest sixteenth
+  (swing-aware), timed from the touch event itself; ↶ Undo swaps the pattern
+  back to before the take (again to redo), Clear empties it, hold a pad for its
+  sound, and "+ Add a pad" turns an empty loop track into another pad with the
+  next unused kit sound. **Steps**: eight track rows. Step tracks play one sound on a 16-step grid that repeats
+  every bar: tap a pad for a hit, drag to paint a run, hold a pad to accent it,
+  and tap the track's name to hear its sound. Sounds are a synthesised kit
+  (`BeatKit`: kick, snare, hats, clap, rim, tom, shaker, cowbell; no audio in
+  the repo), a sound caught from the mic (⋯ → Catch a sound: hit something and
+  it is trimmed to its onset), or any WAV pushed over adb. Loop tracks hold
+  takes from the Portal's mics: tap ● and, stopped, it counts in a bar and
+  records; playing, it records from the bar you are in (if you tapped within a
+  sixteenth of its downbeat) or the next. A take is exactly the loop length
+  (1, 2, 4 or 8 bars), lands on the beat, and loops seamlessly (the 40 ms
+  played past the end is crossfaded into the start). Every track has mute,
+  solo and volume; the bar has play, tempo with tap tempo (tap the BPM), loop
+  length, swing (straight to triplet shuffle), a click, a mic level meter, and
+  under ⋯ a set of grooves to start from, a clap-along sync, the mic path, a
+  12 dB duck of the beat during takes, export to WAV and a fresh start. A USB
+  mic is used automatically when plugged in. The default is a rock beat at 100 BPM, so Play gives you something
+  to play to straight away. Everything survives leaving the screen and
+  restarting, takes included. See Beats in Gotchas.
 - Record (`RecorderService`, the ● Record chip in the dashboard header and in
   the Meetings toolbar; `RecordChip` is the shared face): the Portal's own
   microphones, one tap to start and the same tap to stop, with the running time
@@ -183,6 +210,12 @@ app/                    Android app (package com.portalroomos, no AndroidX)
   src/main/java/com/portalroomos/YouTubeActivity.java the TV site in a WebView
   src/main/java/com/portalroomos/GamesActivity.java    game picker + full-panel WebView
   src/main/java/com/portalroomos/DualSense.java       PS5 controller button fix
+  src/main/java/com/portalroomos/BeatsActivity.java    the beat machine screen (steps and pads)
+  src/main/java/com/portalroomos/PadView.java         one drum pad
+  src/main/java/com/portalroomos/BeatEngine.java      its mixer, mic ring, take timing, mic sync
+  src/main/java/com/portalroomos/BeatSession.java     tracks, patterns, grooves, saved state
+  src/main/java/com/portalroomos/BeatKit.java         the synthesised drum kit
+  src/debug/java/com/portalroomos/MicProbe.java       debug only: level, bandwidth and echo-cancel per mic path
   src/main/java/com/portalroomos/MeetingsActivity.java Granola meetings, notes, transcripts, chat
   src/main/java/com/portalroomos/RecorderService.java  the mic, in chunks, to the Worker
   src/main/java/com/portalroomos/RecordChip.java       the Record chip, shared by both screens
@@ -512,6 +545,79 @@ Things that cost time here, so they do not cost you any.
   `window.__acs.map(c => c.state)` on the DOSBox page.
 - A DualSense remembers one host. Once paired to the Portal, it needs a USB
   cable plugged into the PS5 and a press of PS to go back.
+
+### Beats
+- **The built-in mics are not a music mic.** Every capture path an app can
+  open is one channel out of Facebook's far-field voice DSP, echo canceller
+  always on. Measured 2026-10-19 with `MicProbe` (debug builds: `adb shell am
+  broadcast -a com.portalroomos.MIC_PROBE -n com.portalroomos/.MicProbe
+  [--ez bleed true]`; it logs level, energy above 4 and 7 kHz, whether the
+  speaker's drums are heard, and writes `files/exports/probe-*.wav`). MIC,
+  CAMCORDER, VOICE_RECOGNITION, VOICE_COMMUNICATION and UNPROCESSED; 16-bit and
+  float (the float requests open the HAL's 24-bit `record_24` input); mono,
+  stereo, 3, 4 and 6 channels: all of them hear the drums only as mangled
+  residue, and every multi-channel layout is the same channel copied (ch0 and
+  ch1 within -20 to -56 dB of identical, the rest silent). There is no raw mic
+  array to reach on a locked Portal.
+- What that sounds like: while the beat is loud, the canceller suppresses
+  whatever else it hears, so a voice or guitar comes out gated, muffled and
+  distorted (Jacob's first takes, 2026-10-19). Two mitigations ship: the beat
+  drops 12 dB while a take records (⋯ → Beat 12 dB quieter, on by default),
+  and the path is a setting (⋯ → Mic). The paths differ: plain MIC was the
+  dullest in every run (least above 7 kHz); VOICE_RECOGNITION and CAMCORDER
+  (the back mic) were consistently brighter, and VOICE_RECOGNITION is the one
+  Android requires to be flat with no gain riding or noise reduction, so it is
+  the default. Record the same phrase on each and keep what sounds best.
+- **The real fix is a USB mic or interface** through a USB-A to USB-C OTG
+  adapter (the Portal hosts USB and ships a USB audio policy). It skips the
+  voice DSP entirely. Plug it in and the engine switches to it (the meter reads
+  USB MIC), and back when it is unplugged; each input keeps its own sync. Not
+  yet tried with real hardware. The port is also USB adb, so arm Wi-Fi adb
+  first if a session needs to watch.
+- So the mic cannot hear the sync clicks, and takes line up by clock.
+  Both streams report `getTimestamp` against the monotonic clock, so the
+  engine knows which mic frame was captured as each output frame left the
+  speaker. Whatever the clocks miss is measured by ⋯ → Sync: twelve clicks,
+  clap on the last eight, and the median clap offset is stored in the `beats`
+  preferences (keyed by clock type, rate and input). That also folds in where you put
+  a beat, which is what a take needs. Unsynced, the offset is 0 and the status
+  line after a take says so. **Not yet verified with a real instrument**: a
+  first session should play a few takes on the beat and listen for flams.
+- Volume: the Portal's media stream was at 1 of 18 when this was built, which
+  makes the beat a whisper. The screen says so on arrival when it is under a
+  quarter; the Portal's own buttons set it.
+- The mic is open the whole time the Beats screen is in front (it keeps the
+  last 48 s in memory so a take can start on a downbeat that already went by)
+  and closes when you leave. Nothing is sent anywhere. Android 9 gives the mic
+  to one recorder at a time, so the screen refuses the mic while the room
+  recorder (● Record) runs. The Portal opens UNPROCESSED although
+  `PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED` says false; any refused source
+  falls back to plain MIC. The room is live: the meter sits green with voices in
+  it, and a take with nobody playing comes back as conversation.
+- A take is brought up to a 0.7 peak, by at most +18 dB, because the room mic
+  is quiet next to the synthesised kit. The status line says how much.
+- The tempo locks while any loop holds a take (takes are not time-stretched);
+  clear the loops to change it. The loop length does not lock: a new length
+  applies to new takes, and older ones keep repeating on their own length.
+- WAVs for step tracks: `adb push kick.wav
+  /sdcard/Android/data/com.portalroomos/files/samples/`. Any PCM or float
+  WAV, any rate or channel count, folded to mono at the engine's rate; the
+  first 10 s are kept. Caught sounds live in `files/beats/sounds/`.
+- Export (⋯) renders one pass of the loop, every audible track, to
+  `/sdcard/Android/data/com.portalroomos/files/exports/beat-<time>.wav`. Hits
+  that ring past the end wrap round to the start, so it loops cleanly in a DAW.
+- State: `files/beats/session.json` (settings and patterns) and
+  `files/beats/loop-N.wav` (takes), written on leaving the screen and after
+  each take.
+- Latency, for the pads: the track asks for `PERFORMANCE_MODE_LOW_LATENCY`
+  and is trimmed with `setBufferSizeInFrames` to four HAL periods (4 x 192 =
+  768 frames, 16 ms; the platform minimum is 1924, 40 ms), and the engine
+  renders in 192-frame blocks. Measured 2026-10-20: it lands on the FastMixer
+  (`dumpsys media.audio_flinger`, "Fast tracks", 768 ready) and the Empty
+  counter stays flat while the beat plays (one burst as the stream starts).
+  If it ever crackles, raise `OUT_BLOCKS_BUFFERED`.
+- A tapped step that has not been reached yet would sound twice (once from the
+  finger, once from the pattern), so the engine skips that one occurrence.
 
 ### Granola
 - Granola's hosted MCP server (`mcp.granola.ai/mcp`) is the only way in; there
