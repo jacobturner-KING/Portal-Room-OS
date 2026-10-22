@@ -107,7 +107,7 @@ public class AgentsActivity extends Activity implements AgentWatch.Listener {
         } catch (IllegalArgumentException ignored) {
             sort = Sort.STARTED;
         }
-        sortBtn.setOnClickListener(v -> cycleSort());
+        sortBtn.setOnClickListener(v -> showSortMenu());
         talkBtn = findViewById(R.id.talkBtn);
         focusBtn = findViewById(R.id.focusBtn);
         voiceMeter = findViewById(R.id.voiceMeter);
@@ -226,14 +226,31 @@ public class AgentsActivity extends Activity implements AgentWatch.Listener {
     // ---- Sorting: the order the screen swipes through and the tiles sit in ----
 
     enum Sort {
-        STARTED("Started"), UPDATED("Last updated"), TODAY("Today"), PROJECT("Project");
+        STARTED("Started"), UPDATED("Last updated"), TODAY("Today"), WORKING("Working"), NEEDS_YOU("Needs you"), PROJECT("Project");
         final String label;
         Sort(String label) { this.label = label; }
-        Sort next() { return values()[(ordinal() + 1) % values().length]; }
+        /** Shows only some agents, rather than ordering all of them. */
+        boolean filters() { return this == TODAY || this == WORKING || this == NEEDS_YOU; }
+    }
+
+    /** Waiting on you: a permission prompt held here or at the desk, or a question. */
+    static boolean needsYou(RoomBrainClient.Agent a) {
+        return "waiting".equals(a.state) || a.permission != null;
+    }
+
+    private static boolean passes(Sort sort, RoomBrainClient.Agent a, long midnight) {
+        switch (sort) {
+            case TODAY: return a.updatedAt >= midnight;
+            case WORKING: return "working".equals(a.state);
+            case NEEDS_YOU: return needsYou(a);
+            default: return true;
+        }
     }
 
     /** An order by recent activity moves no more often than this, so tiles hold still to be read and tapped. */
     private static final long REORDER_MS = 30_000;
+    /** As many position dots as fit under the pet. */
+    private static final int MAX_DOTS = 14;
     private Sort sort = Sort.STARTED;
     private List<String> order = new ArrayList<>();
     private Sort orderSort;
@@ -264,18 +281,20 @@ public class AgentsActivity extends Activity implements AgentWatch.Listener {
         List<RoomBrainClient.Agent> eligible = new ArrayList<>();
         long midnight = startOfToday();
         for (RoomBrainClient.Agent a : agents()) {
-            if (sort == Sort.TODAY && a.updatedAt < midnight) continue;
+            if (!passes(sort, a, midnight)) continue;
             byId.put(a.id, a);
             eligible.add(a);
         }
         long now = System.currentTimeMillis();
         boolean sameSet = order.size() == byId.size() && byId.keySet().containsAll(order);
-        boolean stale = (sort == Sort.UPDATED || sort == Sort.TODAY) && now - orderAt > REORDER_MS;
+        boolean stale = (sort == Sort.UPDATED || sort.filters()) && now - orderAt > REORDER_MS;
         if (sort != orderSort || !sameSet || stale) {
             List<RoomBrainClient.Agent> sorted = new ArrayList<>(eligible);
             switch (sort) {
                 case UPDATED:
                 case TODAY:
+                case WORKING:
+                case NEEDS_YOU:
                     sorted.sort((x, y) -> Long.compare(y.updatedAt, x.updatedAt));
                     break;
                 case PROJECT:
@@ -303,11 +322,47 @@ public class AgentsActivity extends Activity implements AgentWatch.Listener {
         return out;
     }
 
-    private void cycleSort() {
-        sort = sort.next();
+    private void setSort(Sort next) {
+        sort = next;
         getSharedPreferences("agents_screen", MODE_PRIVATE).edit().putString("sort", sort.name()).apply();
         selectedId = null;
         render();
+    }
+
+    /** The sort and filter choices, under the Sort button, each with how many agents it would show. */
+    private void showSortMenu() {
+        float density = getResources().getDisplayMetrics().density;
+        LinearLayout menu = new LinearLayout(this);
+        menu.setOrientation(LinearLayout.VERTICAL);
+        menu.setBackground(getDrawable(R.drawable.dialog_bg));
+        int pad = (int) (10 * density);
+        menu.setPadding(pad, pad, pad, pad);
+        android.widget.PopupWindow popup = new android.widget.PopupWindow(menu,
+            (int) (300 * density), LinearLayout.LayoutParams.WRAP_CONTENT, true);
+        long midnight = startOfToday();
+        for (Sort option : Sort.values()) {
+            int count = 0;
+            for (RoomBrainClient.Agent a : agents()) if (passes(option, a, midnight)) count++;
+            Button b = new Button(this);
+            b.setAllCaps(false);
+            b.setTextSize(18);
+            b.setGravity(android.view.Gravity.CENTER_VERTICAL | android.view.Gravity.START);
+            b.setPadding((int) (18 * density), 0, (int) (18 * density), 0);
+            b.setBackground(getDrawable(R.drawable.button_bg));
+            boolean current = option == sort;
+            b.setText((current ? "✓  " : "") + option.label + (option.filters() ? "  ·  " + count : ""));
+            b.setTextColor(getColor(current ? R.color.accent : R.color.text));
+            if (current) b.setTypeface(b.getTypeface(), android.graphics.Typeface.BOLD);
+            b.setOnClickListener(v -> {
+                popup.dismiss();
+                setSort(option);
+            });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (int) (60 * density));
+            lp.topMargin = menu.getChildCount() == 0 ? 0 : (int) (6 * density);
+            menu.addView(b, lp);
+        }
+        popup.setElevation(12 * density);
+        popup.showAsDropDown(sortBtn, 0, (int) (8 * density));
     }
 
     private RoomBrainClient.Agent selected() {
@@ -352,8 +407,8 @@ public class AgentsActivity extends Activity implements AgentWatch.Listener {
         viewBtn.setText(grid ? "One at a time" : "All agents");
         viewBtn.setEnabled(!none);
         sortBtn.setText("Sort: " + sort.label);
-        if (none && sort == Sort.TODAY && !agents().isEmpty()) {
-            emptyText.setText("Nothing active today");
+        if (none && sort.filters() && !agents().isEmpty()) {
+            emptyText.setText(sort == Sort.TODAY ? "Nothing active today" : sort == Sort.WORKING ? "Nothing is working right now" : "Nothing needs you");
             emptyHint.setText("Tap Sort to see every agent.");
         } else {
             emptyText.setText("No agents yet");
@@ -367,11 +422,14 @@ public class AgentsActivity extends Activity implements AgentWatch.Listener {
         int working = 0, needs = 0;
         for (RoomBrainClient.Agent a : list) {
             if ("working".equals(a.state)) working++;
-            if ("waiting".equals(a.state)) needs++;
+            if (needsYou(a)) needs++;
         }
-        summary.setText(none ? "" : list.size() + (list.size() == 1 ? " agent" : " agents") + (sort == Sort.TODAY ? " today" : "")
-            + (working > 0 ? " · " + working + " working" : "")
-            + (needs > 0 ? " · " + needs + " need" + (needs == 1 ? "s" : "") + " you" : ""));
+        String counts = sort == Sort.WORKING ? list.size() + " working"
+            : sort == Sort.NEEDS_YOU ? list.size() + (list.size() == 1 ? " needs" : " need") + " you"
+            : list.size() + (list.size() == 1 ? " agent" : " agents") + (sort == Sort.TODAY ? " today" : "")
+                + (working > 0 ? " · " + working + " working" : "")
+                + (needs > 0 ? " · " + needs + " need" + (needs == 1 ? "s" : "") + " you" : "");
+        summary.setText(none ? "" : counts);
 
         if (none) return;
         if (grid) renderGrid(list); else renderOne(selected(), list);
@@ -454,7 +512,10 @@ public class AgentsActivity extends Activity implements AgentWatch.Listener {
             });
             dots.addView(d, lp);
         }
-        dots.setVisibility(list.size() > 1 ? View.VISIBLE : View.GONE);
+        // Past a dozen or so, dots no longer fit the panel: the hint counts instead.
+        boolean counted = list.size() > MAX_DOTS;
+        dots.setVisibility(list.size() > 1 && !counted ? View.VISIBLE : View.GONE);
+        if (counted) petHint.setText(petHint.getText() + " · " + (list.indexOf(a) + 1) + " of " + list.size());
     }
 
     private void renderGrid(List<RoomBrainClient.Agent> list) {

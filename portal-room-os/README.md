@@ -170,10 +170,12 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   edit, a terminal for a command, a book for a read, thought bubbles while it
   thinks, a wave and a question mark when it needs you, a hop among sparkles
   when it is done), beside what it is doing, what you asked and what it said.
-  Swipe for the next; "All agents" shows them as tiles. "Sort" cycles
-  Started, Last updated, Today (only what moved since midnight) and Project
-  (tiles grouped under each repository); orders by activity move at most every
-  30 s, so tiles hold still to be read and tapped. Tap the pet and it puts
+  Swipe for the next; "All agents" shows them as tiles. "Sort" opens a menu:
+  Started, Last updated, Project (tiles grouped under each repository), and
+  three that show only some agents, each with its count: Today (what moved
+  since midnight), Working, and Needs you (a permission prompt or a question
+  waiting). Orders by activity move at most every 30 s, so tiles hold still to
+  be read and tapped; past 14 agents the position dots become "12 of 25". Tap the pet and it puts
   on headphones: say what you want and tap anywhere to send. Whisper on the
   Worker writes it down and the bridge on that machine
   (`agents/portal-agent-bridge.mjs`) types it into the agent's terminal (tmux,

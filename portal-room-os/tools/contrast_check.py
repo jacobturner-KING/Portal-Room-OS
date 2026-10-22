@@ -332,6 +332,8 @@ ELEMENTS = [
     ("agents",    "view toggle",        "text",    16, False, "button"),
     ("agents",    "sort button",        "text",    16, False, "button"),
     ("agents",    "project label",      "muted",   15, True,  "chip"),
+    ("agents",    "sort menu option",   "text",    18, False, "button"),
+    ("agents",    "sort menu current",  "accent",  18, True,  "button"),
     ("agents",    "agent and host",     "accent",  15, True,  "panel"),
     ("agents",    "project",            "text",    34, True,  "panel"),
     ("agents",    "state working",      "accent",  19, True,  "panel"),
