@@ -69,6 +69,8 @@ public class MainActivity extends Activity {
             startActivity(new Intent(this, CalendarActivity.class));
         findViewById(R.id.calendarBtn).setOnClickListener(openCalendar);
         nextEvent.setOnClickListener(openCalendar);
+        findViewById(R.id.agentsBtn).setOnClickListener(v ->
+            startActivity(new Intent(this, AgentsActivity.class)));
         findViewById(R.id.meetingsBtn).setOnClickListener(v ->
             startActivity(new Intent(this, MeetingsActivity.class)));
         findViewById(R.id.transitBtn).setOnClickListener(v ->

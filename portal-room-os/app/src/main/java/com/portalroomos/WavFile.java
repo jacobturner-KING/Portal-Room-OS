@@ -14,7 +14,8 @@ import java.nio.ByteOrder;
 /**
  * Just enough WAV for the beat machine: read whatever a laptop is likely to
  * hand over (8, 16, 24 or 32-bit integer, 32-bit float, any channel count,
- * any rate), folded to mono at the engine's rate; write 16-bit mono.
+ * any rate), folded to mono at the engine's rate; write 16-bit mono. The one
+ * place the 16-bit mono header is written, for the recorder and push-to-talk too.
  */
 final class WavFile {
 
@@ -91,22 +92,38 @@ final class WavFile {
         return out;
     }
 
-    static void write(File f, float[] data, int rate) throws IOException {
-        File parent = f.getParentFile();
-        if (parent != null) parent.mkdirs();
-        ByteBuffer h = ByteBuffer.allocate(44).order(ByteOrder.LITTLE_ENDIAN);
-        int dataLen = data.length * 2;
+    static final int HEADER_BYTES = 44;
+
+    /** The 44-byte header of 16-bit mono PCM, written over the start of {@code out}. */
+    static void putHeader(byte[] out, int dataLen, int rate) {
+        ByteBuffer h = ByteBuffer.wrap(out, 0, HEADER_BYTES).order(ByteOrder.LITTLE_ENDIAN);
         h.putInt(0x46464952).putInt(36 + dataLen).putInt(0x45564157);
         h.putInt(0x20746d66).putInt(16).putShort((short) 1).putShort((short) 1)
             .putInt(rate).putInt(rate * 2).putShort((short) 2).putShort((short) 16);
         h.putInt(0x61746164).putInt(dataLen);
+    }
+
+    /** 16-bit mono PCM behind its header, as one WAV file's bytes. */
+    static byte[] fromPcm16(byte[] pcm, int rate) {
+        byte[] out = new byte[HEADER_BYTES + pcm.length];
+        putHeader(out, pcm.length, rate);
+        System.arraycopy(pcm, 0, out, HEADER_BYTES, pcm.length);
+        return out;
+    }
+
+    static void write(File f, float[] data, int rate) throws IOException {
+        File parent = f.getParentFile();
+        if (parent != null) parent.mkdirs();
+        int dataLen = data.length * 2;
+        byte[] header = new byte[HEADER_BYTES];
+        putHeader(header, dataLen, rate);
         ByteBuffer body = ByteBuffer.allocate(dataLen).order(ByteOrder.LITTLE_ENDIAN);
         for (float x : data) {
             float c = Math.max(-1f, Math.min(1f, x));
             body.putShort((short) Math.round(c * 32767));
         }
         try (OutputStream out = new BufferedOutputStream(new FileOutputStream(f))) {
-            out.write(h.array());
+            out.write(header);
             out.write(body.array());
         }
     }

@@ -66,6 +66,7 @@ public class LibrespotService extends Service {
     /** The floating "OS" chip. Lives here because this is the one service
      *  that is always up, from boot onwards. */
     private RoomOsOverlay overlay;
+    private Runnable overlayRule;
     private WifiManager.MulticastLock multicastLock;
     private WifiManager.WifiLock wifiLock;
     private PowerManager.WakeLock wakeLock;
@@ -77,9 +78,10 @@ public class LibrespotService extends Service {
 
         // The chip stands down while one of our own screens is already showing.
         overlay = new RoomOsOverlay(this);
-        RoomOsApp.onForegroundChange(() -> {
+        overlayRule = () -> {
             if (RoomOsApp.inForeground()) overlay.hide(); else overlay.show();
-        });
+        };
+        RoomOsApp.addForegroundListener(overlayRule);
 
         running = true;
         worker = new Thread(this::runLoop, "librespot-runner");
@@ -303,7 +305,7 @@ public class LibrespotService extends Service {
         if (multicastLock != null && multicastLock.isHeld()) multicastLock.release();
         if (wifiLock != null && wifiLock.isHeld()) wifiLock.release();
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
-        RoomOsApp.onForegroundChange(null);
+        if (overlayRule != null) RoomOsApp.removeForegroundListener(overlayRule);
         if (overlay != null) overlay.hide();
         super.onDestroy();
     }

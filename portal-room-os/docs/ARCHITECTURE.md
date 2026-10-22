@@ -1,7 +1,8 @@
 # Architecture
 
 > Presence adapters and the voice path below are design, not code. What exists is
-> the Portal, the Worker, and the HTTPS between them.
+> the Portal, the Worker, and the HTTPS between them, plus the coding agents'
+> hooks and bridge on your own machines (`/api/agents` below).
 
 ```text
 ┌──────────────────────── META PORTAL ────────────────────────┐
@@ -43,6 +44,17 @@ Portal sends a structured action. Room Brain authenticates, applies safety rules
 questions about one meeting: the first place the AI box in the diagram is real code) and
 the `/connect` linking page round it out; `room-brain-worker/README.md` is the
 authoritative list.
+
+### /api/agents
+Coding agents are the one feature with a third party on the wire: hooks and a
+bridge on each of your machines (`agents/`). Hooks post each agent's own payload
+to `/api/agents/hook`; the Worker parses it once (`src/agents.ts`) into a
+session held by a Durable Object, `AgentHub`, which serialises the bursts of
+events a busy turn produces and keeps each machine's bridge socket, hibernating
+when idle. The Portal polls `/api/agents` and posts voice, approvals and focus
+requests; the hub hands words and focus requests to the bridge on the agent's
+machine, which types into the agent's terminal. Hooks and bridges use their own
+`AGENT_TOKEN`, so a laptop's config cannot reach the rest of the API.
 
 ### Future /api/voice
 Portal uploads a short audio segment. Room Brain transcribes, routes intent, executes safe actions, and returns text + optional speech audio.

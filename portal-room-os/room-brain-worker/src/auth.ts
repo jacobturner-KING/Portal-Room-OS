@@ -22,6 +22,17 @@ export function checkAppToken(request: Request, env: Env): boolean {
   return timingSafeEqualStr(header.slice(prefix.length), env.APP_TOKEN);
 }
 
+// Hooks and bridges on your machines send `Authorization: Bearer <AGENT_TOKEN>`.
+// A separate secret from APP_TOKEN, so a laptop's hook config opens the agent
+// routes and nothing else.
+export function checkAgentToken(request: Request, env: Env): boolean {
+  if (!env.AGENT_TOKEN) return false;
+  const header = request.headers.get("authorization") ?? "";
+  const prefix = "Bearer ";
+  if (!header.startsWith(prefix)) return false;
+  return timingSafeEqualStr(header.slice(prefix.length), env.AGENT_TOKEN);
+}
+
 // The /connect admin surface accepts either ?admin=<ADMIN_TOKEN> or the rk_admin cookie.
 export function checkAdmin(request: Request, env: Env): boolean {
   const url = new URL(request.url);

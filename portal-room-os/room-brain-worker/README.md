@@ -26,6 +26,16 @@ a credential.
 | `POST /api/recordings/<id>/finish` | bearer | `{durationSec}`; stitches the transcript, names and summarises the recording |
 | `GET /api/recordings/<id>` | bearer | The recording's record |
 | `DELETE /api/recordings/<id>` | bearer | Removes it and its transcript |
+| `POST /api/agents/hook?agent=claude\|codex\|cursor\|generic` | `Bearer <AGENT_TOKEN>` | An agent's own hook payload, as is; machine and terminal in `X-Agent-*` headers. Returns `permissionId` + `waitSec` when a Claude Code permission prompt should wait for the panel |
+| `GET /api/agents/permission?id=` | `Bearer <AGENT_TOKEN>` | A held prompt: `200` with the hook output to print, `204` still waiting, `410` gone |
+| `GET /api/agents/bridge` | `AGENT_TOKEN` in the first message | WebSocket for a machine's bridge: receives `say` and `focus`, answers `result` |
+| `GET /api/agents` | bearer | Every agent session: state, activity, prompt, reply, held permission, whether it can be talked to; `wallApprovals`; connected bridges |
+| `POST /api/agents/say?id=` | bearer | `audio/wav` (transcribed by Whisper) or `{text}`; typed into the agent's terminal by its machine's bridge |
+| `POST /api/transcribe` | bearer | `audio/wav` in, `{ok, text}` out (Whisper); the Portal uses it for agents it reaches over USB through AppTabs |
+| `POST /api/agents/decide` | bearer | `{id, permissionId, allow}` |
+| `POST /api/agents/focus` | bearer | `{id}`: bring the agent's terminal forward on its machine |
+| `POST /api/agents/dismiss` | bearer | `{id}`: drop it from the list until it next does something |
+| `POST /api/agents/settings` | bearer | `{wallApprovals}` |
 | `GET /connect?admin=<ADMIN_TOKEN>` | admin | One-time page to link Spotify / Google / Granola |
 | `GET /admin/granola?admin=&tool=&args=` | admin | Granola's live tool schemas, and one raw tool call for tuning the parsers |
 | `GET /auth/{spotify,google,granola}/start` | admin cookie | Begins OAuth |
@@ -37,14 +47,21 @@ Local dev reads `.dev.vars`. Production uses `wrangler secret put <NAME>`:
 
 `APP_TOKEN`, `ADMIN_TOKEN`, `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`,
 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MAJOR_KEY_URL`, `MAJOR_KEY_KEY`,
-`HA_URL`, `HA_TOKEN` (Home Assistant base URL reachable from the Worker, e.g. via a
+`AGENT_TOKEN`, `HA_URL`, `HA_TOKEN` (Home Assistant base URL reachable from the Worker, e.g. via a
 Cloudflare Tunnel, plus a long-lived access token), `OBA_API_KEY` (OneBusAway Puget
 Sound key; the documented `TEST` key is used until it is set). `ANTHROPIC_API_KEY` (optional) to have
 Claude, rather than Granola's own AI, answer the Meetings screen's questions about one
 meeting. Granola needs no secret: the Worker registers itself with Granola's OAuth server
 on the first link from `/connect`.
 
-Bindings: `ROOM_KV` (KV) and `AI` (Workers AI, for Portal recordings), both in `wrangler.jsonc`.
+`AGENT_TOKEN` (optional) turns on the Agents screen: the hooks and bridges on your machines
+send it, and it opens the `/api/agents/{hook,permission,bridge}` routes and nothing else.
+
+Bindings: `ROOM_KV` (KV), `AI` (Workers AI, for Portal recordings and spoken agent
+instructions) and `AGENT_HUB` (a SQLite-backed Durable Object, `src/agents.ts`, holding every
+agent session and the bridges' hibernating sockets), all in `wrangler.jsonc`. The
+`agents-v1` migration creates the Durable Object on the first deploy after it was added;
+copy the `durable_objects` and `migrations` blocks into `wrangler.local.jsonc` too.
 
 Non-secret vars (`WEATHER_LAT`, `WEATHER_LON`, `WEATHER_LABEL`) live in `wrangler.jsonc`.
 Leave them empty and the Worker geolocates the Portal's own requests (Cloudflare `request.cf`,

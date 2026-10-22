@@ -18,8 +18,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -64,20 +62,8 @@ public class RecorderService extends Service {
     static volatile String savedTitle = "";
     static volatile String savedId = "";
     static volatile String lastError = "";
-    /**
-     * Recent sound levels, 0 (silence) to 1 (loud), one per 50 ms, a ring the
-     * capture thread writes and the level meter reads. Written unsynchronised
-     * on purpose: a torn frame on a meter is nothing, a lock on the capture
-     * loop is not.
-     */
-    static final float[] levels = new float[40];
-    static volatile int levelPos;
-    /**
-     * dB below full scale that counts as silence and as loud, for the meter.
-     * Measured on the Portal: a quiet room sits near -55, a voice a metre off
-     * runs -36 to -17.
-     */
-    private static final float DB_FLOOR = -60f, DB_CEIL = -12f;
+    /** What the mic hears, for the meter beside the Record chip. */
+    static final LevelRing LEVELS = new LevelRing(40);
 
     private static final SimpleDateFormat ISO = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
     static { ISO.setTimeZone(TimeZone.getTimeZone("UTC")); }
@@ -138,7 +124,7 @@ public class RecorderService extends Service {
         chunksPending = 0;
         savedTitle = "";
         lastError = "";
-        java.util.Arrays.fill(levels, 0f);
+        LEVELS.clear();
         state = State.RECORDING;
 
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -184,7 +170,7 @@ public class RecorderService extends Service {
                     continue;
                 }
                 out.write(buf, 0, n);
-                meter(buf, n);
+                LEVELS.push(buf, n, SAMPLE_RATE);
                 written += n;
                 if (written >= chunkBytesMax) {
                     out.close();
@@ -209,23 +195,6 @@ public class RecorderService extends Service {
         state = State.FINISHING;
         long durationSec = (System.currentTimeMillis() - startedAtMs) / 1000;
         uploads.execute(() -> finish(durationSec));
-    }
-
-    /** Pushes one level per 50 ms of the buffer just read, RMS mapped onto a dB scale. */
-    private static void meter(byte[] pcm, int n) {
-        int block = SAMPLE_RATE * 2 / 20; // 50 ms of 16-bit mono
-        for (int start = 0; start + block <= n; start += block) {
-            double sum = 0;
-            for (int i = start; i < start + block; i += 2) {
-                int sample = (short) ((pcm[i] & 0xFF) | (pcm[i + 1] << 8));
-                sum += (double) sample * sample;
-            }
-            double rms = Math.sqrt(sum / (block / 2));
-            float db = (float) (20 * Math.log10(Math.max(rms, 1) / 32768.0));
-            float level = Math.max(0f, Math.min(1f, (db - DB_FLOOR) / (DB_CEIL - DB_FLOOR)));
-            levels[levelPos] = level;
-            levelPos = (levelPos + 1) % levels.length;
-        }
     }
 
     private File chunkFile(int seq) {
@@ -299,14 +268,10 @@ public class RecorderService extends Service {
     /** The chunk's PCM behind a 44-byte header: what Whisper accepts as a file. */
     private static byte[] wav(File pcm) throws IOException {
         int len = (int) pcm.length();
-        byte[] out = new byte[44 + len];
-        ByteBuffer h = ByteBuffer.wrap(out, 0, 44).order(ByteOrder.LITTLE_ENDIAN);
-        h.put("RIFF".getBytes()).putInt(36 + len).put("WAVE".getBytes())
-         .put("fmt ".getBytes()).putInt(16).putShort((short) 1).putShort((short) 1)
-         .putInt(SAMPLE_RATE).putInt(SAMPLE_RATE * 2).putShort((short) 2).putShort((short) 16)
-         .put("data".getBytes()).putInt(len);
+        byte[] out = new byte[WavFile.HEADER_BYTES + len];
+        WavFile.putHeader(out, len, SAMPLE_RATE);
         try (FileInputStream in = new FileInputStream(pcm)) {
-            int off = 44, n;
+            int off = WavFile.HEADER_BYTES, n;
             while (off < out.length && (n = in.read(out, off, out.length - off)) > 0) off += n;
         }
         return out;

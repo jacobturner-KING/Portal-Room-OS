@@ -4,6 +4,11 @@
 # Bearer token the Portal app sends on every /api request.
 APP_TOKEN="change-me-portal-token"
 
+# Optional. Shared with the hook and bridge on each machine whose coding agents
+# show on the Agents screen (agents/install.mjs --token). Opens the agent routes
+# and nothing else; leave it unset and the Agents screen stays empty.
+AGENT_TOKEN=""
+
 # Gate for the /connect admin page. Open /connect?admin=THIS_VALUE once to link accounts.
 ADMIN_TOKEN="change-me-admin-token"
 

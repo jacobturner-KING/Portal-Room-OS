@@ -28,6 +28,8 @@ import android.widget.TextView;
 final class RoomOsOverlay {
 
     private static final String TAG = "RoomOsOverlay";
+    /** Where the OS chip sits, in dp from the top right; the Agents chip lines up beside it. */
+    static final int RIGHT_DP = 96, TOP_DP = 14, MIN_WIDTH_DP = 64, MIN_HEIGHT_DP = 44;
 
     private final Context context;
     private WindowManager windows;
@@ -53,27 +55,16 @@ final class RoomOsOverlay {
             view.setBackground(context.getDrawable(R.drawable.chip_bg));
             view.setGravity(Gravity.CENTER);
             float density = context.getResources().getDisplayMetrics().density;
-            view.setMinWidth((int) (64 * density));
-            view.setMinHeight((int) (44 * density));
+            view.setMinWidth((int) (MIN_WIDTH_DP * density));
+            view.setMinHeight((int) (MIN_HEIGHT_DP * density));
             view.setOnClickListener(v -> {
                 Intent open = new Intent(context, MainActivity.class);
                 open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 context.startActivity(open);
             });
 
-            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                // Not focusable and not touch-modal, so every touch outside the
-                // chip still reaches the app underneath.
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                    | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-                PixelFormat.TRANSLUCENT);
-            lp.gravity = Gravity.TOP | Gravity.END;
             // Clear of the stock launcher's account avatar in the corner.
-            lp.x = (int) (96 * density);
-            lp.y = (int) (14 * density);
+            WindowManager.LayoutParams lp = floating(context, Gravity.TOP | Gravity.END, RIGHT_DP, TOP_DP);
 
             windows = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
             if (windows == null) return;
@@ -84,6 +75,25 @@ final class RoomOsOverlay {
             Log.w(TAG, "could not show the OS chip", e);
             chip = null;
         }
+    }
+
+    /**
+     * Where a floating control sits: wrapped to its content, never taking focus,
+     * and passing every touch outside itself to the app underneath. Offsets in dp.
+     */
+    static WindowManager.LayoutParams floating(Context context, int gravity, int xDp, int yDp) {
+        float density = context.getResources().getDisplayMetrics().density;
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            PixelFormat.TRANSLUCENT);
+        lp.gravity = gravity;
+        lp.x = (int) (xDp * density);
+        lp.y = (int) (yDp * density);
+        return lp;
     }
 
     /** Takes it down, e.g. while Room OS itself is the thing on screen. */

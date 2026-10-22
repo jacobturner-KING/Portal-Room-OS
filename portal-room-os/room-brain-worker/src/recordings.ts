@@ -75,7 +75,7 @@ export async function getRecording(env: Env, id: string): Promise<Recording | nu
   return await getJSON<Recording>(env, key(id));
 }
 
-function base64(bytes: ArrayBuffer): string {
+export function base64(bytes: ArrayBuffer): string {
   const u8 = new Uint8Array(bytes);
   let s = "";
   const step = 0x8000; // String.fromCharCode caps its argument count

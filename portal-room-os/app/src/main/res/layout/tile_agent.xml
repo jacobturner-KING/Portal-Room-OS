@@ -1,0 +1,24 @@
+<!-- One agent in the all-agents view: its pet and a glance at what it is doing. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/button_bg"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingEnd="18dp">
+    <com.portalroomos.PetView
+        android:id="@+id/tilePet"
+        android:layout_width="190dp"
+        android:layout_height="match_parent"
+        android:duplicateParentState="true" />
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+        <TextView android:id="@+id/tileAgent" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/accent" android:textSize="14sp" android:textStyle="bold" />
+        <TextView android:id="@+id/tileProject" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/text" android:textSize="26sp" android:textStyle="bold" />
+        <TextView android:id="@+id/tileState" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:singleLine="true" android:textColor="@color/accent" android:textSize="17sp" android:textStyle="bold" />
+        <TextView android:id="@+id/tileActivity" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:maxLines="2" android:ellipsize="end" android:textColor="@color/muted" android:textSize="15sp" />
+    </LinearLayout>
+</LinearLayout>

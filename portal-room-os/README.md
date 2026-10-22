@@ -9,8 +9,8 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
 
 ## What works today
 - Dashboard (`MainActivity`): clock, weather, daily focus, next calendar event,
-  home line, now-playing, and Talk / Lights / Music / YouTube / Games / Beats / Calendar /
-  Meetings / Transit / Timer / Add buttons. A running Pomodoro shows as a card at the top of the right
+  home line, now-playing, and Talk / Lights / Music / YouTube / Games / Beats / Agents /
+  Calendar / Meetings / Transit / Timer / Add buttons. A running Pomodoro shows as a card at the top of the right
   column, with its ring, phase, remaining time and session name, sized to read
   from across the room; tap it to open the timer screen. The card is only there
   when a timer is going, so an idle dashboard stays clean. The Portal button hands
@@ -162,6 +162,40 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   Credentials persist in the app's files dir, so it logs back in on every
   start and "Room OS" stays in the Spotify device list. `BootReceiver` starts the
   service at boot.
+- Agents (`AgentsActivity`, the Agents button, the floating Agents chip, or a
+  banner): every coding agent on every machine you use, on the wall. Claude
+  Code, Codex and Cursor report through their own hooks (`agents/`, set up per
+  machine by `agents/install.mjs`) to the Worker's agent hub. One at a time, each
+  agent gets the screen: a pet (`PetView`) acts out the work (a pencil for an
+  edit, a terminal for a command, a book for a read, thought bubbles while it
+  thinks, a wave and a question mark when it needs you, a hop among sparkles
+  when it is done), beside what it is doing, what you asked and what it said.
+  Swipe for the next; "All agents" shows them as tiles. "Sort" cycles
+  Started, Last updated, Today (only what moved since midnight) and Project
+  (tiles grouped under each repository); orders by activity move at most every
+  30 s, so tiles hold still to be read and tapped. Tap the pet and it puts
+  on headphones: say what you want and tap anywhere to send. Whisper on the
+  Worker writes it down and the bridge on that machine
+  (`agents/portal-agent-bridge.mjs`) types it into the agent's terminal (tmux,
+  iTerm2 or Terminal.app; never into a bare shell). "Approve here" holds Claude
+  Code's permission prompts for an Approve or Deny on the panel, up to 110 s
+  before the terminal asks instead. "Show on <machine>" brings the terminal
+  forward there. A finished turn or a new question chimes (`AgentChime`) and
+  drops a banner over whatever is showing, from any screen; `AgentWatch` owns
+  the polling so it happens once. Setup is in `agents/README.md`.
+
+  Agents come from two places, merged into one list: the Room Brain (every
+  machine whose hooks report to it, over the internet), and **AppTabs over
+  the USB cable** (the Mac the Portal is plugged into, no internet). For the
+  second, press "Show on Portal (USB)" on AppTabs' Agents screen: it runs
+  `adb reverse tcp:4741 tcp:4741` and links this app with a broadcast that
+  only the adb shell may send (`AgentSourceReceiver`, guarded by DUMP; only
+  loopback addresses are taken). Speech for those agents is turned into text
+  by the Room Brain's `/api/transcribe`, then sent over the cable. AppTabs
+  can also run that link over the home Wi-Fi (adb over TCP, armed over the
+  cable once), so the panel can hang in another room. Agents from AppTabs
+  carry their usage, shown under the state: context window in use, API-
+  equivalent cost, how long they have run, and how many calls.
 - Room Brain Worker: your own `https://portal-room-brain.<subdomain>.workers.dev`
   (Spotify, Google Calendar, Open-Meteo weather auto-located from the Portal's
   network, Major Key and Home Assistant hooks ready for their secrets).
@@ -220,10 +254,18 @@ app/                    Android app (package com.portalroomos, no AndroidX)
   src/main/java/com/portalroomos/RecorderService.java  the mic, in chunks, to the Worker
   src/main/java/com/portalroomos/RecordChip.java       the Record chip, shared by both screens
   src/main/java/com/portalroomos/LevelMeterView.java   the waveform beside the chip
+  src/main/java/com/portalroomos/LevelRing.java       recent mic levels, for any meter
+  src/main/java/com/portalroomos/AgentsActivity.java  coding agents: one at a time or all as tiles
+  src/main/java/com/portalroomos/PetView.java         an agent's pet, acting out its work
+  src/main/java/com/portalroomos/AgentWatch.java      polls the agent hub once for the whole app; pings
+  src/main/java/com/portalroomos/AgentsOverlay.java   the floating Agents chip and the ping banner
+  src/main/java/com/portalroomos/AgentChime.java      the synthesised done / needs-you pings
+  src/main/java/com/portalroomos/VoiceNote.java       push-to-talk capture for the agents
   src/main/jniLibs/arm64-v8a/liblibrespot.so   librespot binary (stripped, ~13 MB)
   src/main/res/drawable-nodpi/portal_background.png   wall photo, 1280x800
 tools/contrast_check.py WCAG AAA gate for the palette over that photo.
 room-brain-worker/      Cloudflare Worker (TypeScript). See its README for endpoints.
+agents/                 Per-machine hook, bridge and installer for the Agents screen.
 docs/                   Product spec and architecture.
 ```
 
@@ -255,7 +297,8 @@ needs the Worker's URL and token at build time.
    sign the speaker in for the first time. Both are in Getting to the dashboard
    and Gotchas respectively.
 6. **Optional:** `TRANSIT_CONFIG` for the transit board, Home Assistant for the
-   home line and the Lights button, Major Key for the focus line. See Optional
+   home line and the Lights button, Major Key for the focus line, `AGENT_TOKEN`
+   plus `agents/install.mjs` on each machine for the Agents screen. See Optional
    integrations.
 
 ## Build and deploy the app
@@ -337,6 +380,12 @@ reach it another way. Two things close the gap, and they are a pair:
   clear of the launcher's account avatar. Tapping it brings the dashboard
   forward. It stands down while one of our own screens is already showing, which
   `RoomOsApp` tracks through activity lifecycle callbacks.
+
+A second chip, **Agents**, sits just left of the OS chip under the same rule:
+a separate button straight to the Agents screen, with a dot that turns amber
+when an agent needs an answer, green when one has finished since you last
+looked, and blue while any are working (`AgentsOverlay`). Its banner is the one
+overlay that also shows over Room OS's own screens, for a few seconds per ping.
 
 A system overlay is the only mechanism Android gives a third-party app to put a
 control on someone else's screen. It needs `SYSTEM_ALERT_WINDOW`, which a
@@ -731,6 +780,14 @@ These fill in the rest:
    minute. Grant the mic once: `adb shell pm grant com.portalroomos
    android.permission.RECORD_AUDIO` (the on-device permission dialog is as
    unreadable as the installer's).
+
+8. Agents: `wrangler secret put AGENT_TOKEN` (another long random string; it
+   opens the agent routes and nothing else), deploy (the first deploy creates
+   the `AgentHub` Durable Object), then on each machine run
+   `node agents/install.mjs --url <worker> --token <AGENT_TOKEN>`. Talking to
+   an agent needs Node 22+ for the bridge and the agent running in tmux,
+   iTerm2 or Terminal.app. `AGENT_VOICE_LANGUAGE` in `wrangler.jsonc` pins
+   Whisper's language; empty detects it. Full notes in `agents/README.md`.
 
 ## Roadmap after that
 1. Timer alerts from any screen: an `AlarmManager` wake-up plus a notification,

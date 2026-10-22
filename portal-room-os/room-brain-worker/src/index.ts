@@ -1,4 +1,5 @@
-import { checkAdmin, checkAppToken, unauthorized } from "./auth";
+import { checkAdmin, checkAgentToken, checkAppToken, unauthorized } from "./auth";
+import { hookMeta, hubStub, parseAgent, parseHook, permissionHookOutput, transcribe } from "./agents";
 import { renderConnect } from "./connect";
 import { del, getJSON, putJSON } from "./kv";
 import { applyAction, buildState } from "./state";
@@ -312,6 +313,93 @@ async function handle(request: Request, env: Env): Promise<Response> {
     return json({ ok: false, error: "not_found" }, 404);
   }
 
+  // ---- Agents: hooks and bridges on your machines (AGENT_TOKEN) ----
+  // POST /api/agents/hook?agent=claude|codex|cursor|generic   body: the agent's own hook payload
+  // GET  /api/agents/permission?id=   a held permission prompt: 200 hook output, 204 pending, 410 gone
+  // GET  /api/agents/bridge           WebSocket; the token rides in the first message
+  if (pathname === "/api/agents/hook" && method === "POST") {
+    if (!env.AGENT_TOKEN) return json({ ok: false, error: "AGENT_TOKEN is not set on the Worker" }, 503);
+    if (!checkAgentToken(request, env)) return unauthorized();
+    const agent = parseAgent(url.searchParams.get("agent"));
+    if (!agent) return json({ ok: false, error: "agent must be claude, codex, cursor or generic" }, 400);
+    const payload = await request.json().catch(() => null);
+    const update = parseHook(agent, payload);
+    if (!update) return json({ ok: true, ignored: true });
+    return json({ ok: true, ...(await hubStub(env).hook(hookMeta(agent, request.headers), update)) });
+  }
+  if (pathname === "/api/agents/permission" && method === "GET") {
+    if (!checkAgentToken(request, env)) return unauthorized();
+    const id = url.searchParams.get("id") ?? "";
+    if (!/^[0-9a-f]{32}$/.test(id)) return json({ error: "bad id" }, 400);
+    const r = await hubStub(env).permission(id);
+    if (r.status === "pending") return new Response(null, { status: 204 });
+    if (r.status === "gone") return new Response(null, { status: 410 });
+    return json(permissionHookOutput(r.behavior));
+  }
+  if (pathname === "/api/agents/bridge" && method === "GET") {
+    if (!env.AGENT_TOKEN) return json({ ok: false, error: "AGENT_TOKEN is not set on the Worker" }, 503);
+    return hubStub(env).fetch(request);
+  }
+
+  // ---- Speech to text, for agents the Portal reaches another way (AppTabs over USB) ----
+  if (pathname === "/api/transcribe" && method === "POST") {
+    if (!checkAppToken(request, env)) return unauthorized();
+    const wav = await request.arrayBuffer();
+    if (wav.byteLength < 1000) return json({ ok: false, error: "That was too short to hear" });
+    const text = await transcribe(env, wav);
+    return json(text ? { ok: true, text } : { ok: false, error: "Didn't catch any words" });
+  }
+
+  // ---- Agents: the Portal's side (bearer-token auth) ----
+  if (pathname.startsWith("/api/agents")) {
+    if (!checkAppToken(request, env)) return unauthorized();
+    const hub = hubStub(env);
+    if (pathname === "/api/agents" && method === "GET") {
+      return json(await hub.snapshot());
+    }
+    // Spoken (audio/wav, transcribed here) or typed ({text}); either way it is typed into the agent's terminal.
+    if (pathname === "/api/agents/say" && method === "POST") {
+      const id = url.searchParams.get("id") ?? "";
+      let text = "";
+      if ((request.headers.get("content-type") ?? "").startsWith("audio/")) {
+        const wav = await request.arrayBuffer();
+        if (wav.byteLength < 1000) return json({ ok: false, error: "That was too short to hear" });
+        text = await transcribe(env, wav);
+        if (!text) return json({ ok: false, error: "Didn't catch any words" });
+      } else {
+        const body = (await request.json().catch(() => ({}))) as { text?: unknown };
+        text = typeof body.text === "string" ? body.text : "";
+      }
+      const r = await hub.say(id, text);
+      return json(r.ok ? { ok: true, text: r.text ?? text } : { ok: false, text, error: r.error });
+    }
+    const body = (await request.json().catch(() => ({}))) as {
+      id?: unknown;
+      permissionId?: unknown;
+      allow?: unknown;
+      wallApprovals?: unknown;
+    };
+    const id = typeof body.id === "string" ? body.id : "";
+    if (pathname === "/api/agents/decide" && method === "POST") {
+      if (typeof body.permissionId !== "string" || typeof body.allow !== "boolean") {
+        return json({ ok: false, error: "needs id, permissionId and allow" }, 400);
+      }
+      return json(await hub.decide(id, body.permissionId, body.allow));
+    }
+    if (pathname === "/api/agents/focus" && method === "POST") {
+      return json(await hub.focus(id));
+    }
+    if (pathname === "/api/agents/dismiss" && method === "POST") {
+      await hub.dismiss(id);
+      return json({ ok: true });
+    }
+    if (pathname === "/api/agents/settings" && method === "POST") {
+      const patch = typeof body.wallApprovals === "boolean" ? { wallApprovals: body.wallApprovals } : {};
+      return json({ ok: true, settings: await hub.setSettings(patch) });
+    }
+    return json({ ok: false, error: "not_found" }, 404);
+  }
+
   // Admin: what Granola's server actually exposes, for tuning the parsers.
   if (pathname === "/admin/granola" && method === "GET") {
     if (!checkAdmin(request, env)) return unauthorized();
@@ -411,6 +499,8 @@ async function handle(request: Request, env: Env): Promise<Response> {
 
   return json({ ok: false, error: "not_found" }, 404);
 }
+
+export { AgentHub } from "./agents";
 
 export default {
   async fetch(request, env): Promise<Response> {

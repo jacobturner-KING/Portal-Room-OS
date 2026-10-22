@@ -1,0 +1,93 @@
+#!/bin/bash
+# portal-agent-hook <claude|codex|cursor|generic> [codex-json]
+#
+# Hands a coding agent's hook payload to the Room Brain so the Portal can show
+# it. A dumb pipe on purpose: the payload goes up untouched and the Worker does
+# all the reading (room-brain-worker/src/agents.ts), so a new agent version
+# needs a Worker deploy, not a reinstall on every machine.
+#
+# It never holds an agent up: the post runs in the background and this exits 0
+# at once. The one exception is Claude Code's PermissionRequest while "approve
+# here" is on in the Portal: then it waits, up to the Worker's limit, for an
+# answer from the panel, and prints it as the hook's decision. No answer, and it
+# prints nothing, so the terminal asks as usual.
+#
+# Reads ROOM_BRAIN_URL, AGENT_TOKEN and AGENT_HOST from ~/.portal-agents/config,
+# which agents/install.mjs writes. No config, no post, no complaint.
+
+agent="${1:-}"
+conf="${PORTAL_AGENTS_CONFIG:-$HOME/.portal-agents/config}"
+# shellcheck disable=SC1090
+[ -f "$conf" ] && . "$conf"
+
+# Codex passes its JSON as the last argument; everyone else on stdin.
+if [ "$agent" = "codex" ]; then
+  payload="${2:-}"
+else
+  payload="$(cat)"
+fi
+
+event_is() {
+  printf '%s' "$payload" | grep -q "\"hook_event_name\"[[:space:]]*:[[:space:]]*\"$1\""
+}
+
+# Cursor reads the hook's stdout; say "carry on" before anything else can fail.
+if [ "$agent" = "cursor" ]; then
+  if event_is beforeSubmitPrompt; then printf '{"continue":true}\n'; else printf '{}\n'; fi
+fi
+
+[ -n "$ROOM_BRAIN_URL" ] && [ -n "$AGENT_TOKEN" ] && [ -n "$payload" ] || exit 0
+command -v curl >/dev/null 2>&1 || exit 0
+url="${ROOM_BRAIN_URL%/}"
+
+# Where this agent's terminal is, so the bridge on this machine can type into it.
+host="${AGENT_HOST:-$(hostname -s 2>/dev/null || hostname)}"
+tty_name="$(ps -o tty= -p "$PPID" 2>/dev/null | tr -d ' ')"
+case "$tty_name" in ""|"?"|"??") tty_name="" ;; esac
+tmux_socket="${TMUX%%,*}"
+
+# When the event happened, in ms: posts run in the background and can land out
+# of order, and the Worker drops one older than what it already has.
+now_ms="$(date +%s%3N 2>/dev/null)"
+case "$now_ms" in
+  *[!0-9]*|"") now_ms="$(perl -MTime::HiRes=time -e 'printf "%d", time()*1000' 2>/dev/null || echo "$(date +%s)000")" ;;
+esac
+
+# The token goes in through a file descriptor, never argv, so `ps` cannot show it.
+post() {
+  curl -sS -m 8 -X POST "$url/api/agents/hook?agent=$agent" \
+    -H @<(printf 'Authorization: Bearer %s\n' "$AGENT_TOKEN") \
+    -H "Content-Type: application/json" \
+    -H "X-Agent-Host: $host" \
+    -H "X-Agent-Time: $now_ms" \
+    ${TMUX_PANE:+-H "X-Tmux-Pane: $TMUX_PANE"} \
+    ${tmux_socket:+-H "X-Tmux-Socket: $tmux_socket"} \
+    ${ITERM_SESSION_ID:+-H "X-Iterm-Session: $ITERM_SESSION_ID"} \
+    ${tty_name:+-H "X-Tty: $tty_name"} \
+    ${TERM_PROGRAM:+-H "X-Term-Program: $TERM_PROGRAM"} \
+    --data-binary @- <<<"$payload"
+}
+
+if [ "$agent" = "claude" ] && event_is PermissionRequest; then
+  resp="$(post 2>/dev/null)"
+  pid="$(printf '%s' "$resp" | sed -n 's/.*"permissionId":"\([0-9a-f]\{32\}\)".*/\1/p')"
+  [ -n "$pid" ] || exit 0
+  wait_sec="$(printf '%s' "$resp" | sed -n 's/.*"waitSec":\([0-9]\{1,4\}\).*/\1/p')"
+  deadline=$(( $(date +%s) + ${wait_sec:-110} ))
+  out="$(mktemp -t portal-agent.XXXXXX)" || exit 0
+  trap 'rm -f "$out"' EXIT
+  while [ "$(date +%s)" -lt "$deadline" ]; do
+    code="$(curl -sS -m 8 -o "$out" -w '%{http_code}' \
+      -H @<(printf 'Authorization: Bearer %s\n' "$AGENT_TOKEN") \
+      "$url/api/agents/permission?id=$pid" 2>/dev/null)"
+    case "$code" in
+      200) cat "$out"; exit 0 ;;
+      410) exit 0 ;;
+    esac
+    sleep 1
+  done
+  exit 0
+fi
+
+( post >/dev/null 2>&1 & ) </dev/null >/dev/null 2>&1
+exit 0

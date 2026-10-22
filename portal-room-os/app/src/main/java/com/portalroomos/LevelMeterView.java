@@ -14,8 +14,9 @@ import android.view.View;
  * while something is being heard and stay muted when the room is quiet, so the
  * difference reads from across the room.
  *
- * The levels come from {@link RecorderService#levels}, written by the capture
- * thread; this view only reads them, on its own 50 ms redraw while active.
+ * The levels come from a {@link LevelRing} written by a capture thread, the
+ * recorder's unless told otherwise; this view only reads them, on its own
+ * 50 ms redraw while active.
  */
 public class LevelMeterView extends View {
 
@@ -26,6 +27,7 @@ public class LevelMeterView extends View {
     private final Paint bar = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final int quietColor, heardColor;
     private boolean active;
+    private LevelRing source = RecorderService.LEVELS;
 
     public LevelMeterView(Context context) {
         this(context, null);
@@ -39,6 +41,12 @@ public class LevelMeterView extends View {
         bar.setStyle(Paint.Style.STROKE);
     }
 
+    /** Which microphone to show. */
+    void setSource(LevelRing ring) {
+        source = ring;
+        invalidate();
+    }
+
     /** Redraws itself while active; a single static frame otherwise. */
     void setActive(boolean on) {
         if (active == on) return;
@@ -48,9 +56,9 @@ public class LevelMeterView extends View {
 
     @Override protected void onDraw(Canvas c) {
         super.onDraw(c);
-        float[] levels = RecorderService.levels;
+        float[] levels = source.levels;
         int n = levels.length;
-        int pos = RecorderService.levelPos;   // next write slot; the oldest sample
+        int pos = source.pos;   // next write slot; the oldest sample
         float w = getWidth(), h = getHeight();
         float gap = w / n;
         float stroke = Math.max(2f, gap * 0.55f);

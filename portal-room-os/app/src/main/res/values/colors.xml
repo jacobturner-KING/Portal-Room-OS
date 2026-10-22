@@ -22,6 +22,13 @@
     <!-- Rules and dividers, at 3:1 against panel for SC 1.4.11. -->
     <color name="rule">#66FFFFFF</color>
 
+    <!-- Agents' pets: one colour per agent, drawn on panels. Non-text, so 3:1
+         against panel (tools/contrast_check.py checks it). -->
+    <color name="pet_claude">#E8A07E</color>
+    <color name="pet_codex">#7FD3BE</color>
+    <color name="pet_cursor">#B9A9FF</color>
+    <color name="pet_generic">#9FC4E8</color>
+
     <!-- Opaque fallback: window background before the photo draws, system bars. -->
     <color name="bg">#101218</color>
 </resources>
