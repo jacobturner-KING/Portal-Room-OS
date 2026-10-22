@@ -331,6 +331,8 @@ ELEMENTS = [
     ("agents",    "approvals off",      "muted",   16, False, "button"),
     ("agents",    "view toggle",        "text",    16, False, "button"),
     ("agents",    "sort button",        "text",    16, False, "button"),
+    ("agents",    "voice on",           "accent",  16, False, "button"),
+    ("agents",    "voice off",          "muted",   16, False, "button"),
     ("agents",    "project label",      "muted",   15, True,  "chip"),
     ("agents",    "sort menu option",   "text",    18, False, "button"),
     ("agents",    "sort menu current",  "accent",  18, True,  "button"),

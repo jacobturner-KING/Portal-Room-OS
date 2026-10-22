@@ -51,7 +51,7 @@ public class AgentsActivity extends Activity implements AgentWatch.Listener {
     private PetView pet, emptyPet;
     private TextView summary, agentLine, project, stateLine, statsLine, activity, attention, askText;
     private TextView promptLabel, prompt, replyLabel, reply, sayLine, status, petHint, listeningText, emptyText, emptyHint;
-    private Button approvalsBtn, viewBtn, sortBtn, talkBtn, focusBtn;
+    private Button approvalsBtn, viewBtn, sortBtn, voiceBtn, talkBtn, focusBtn;
     private LevelMeterView voiceMeter;
     private GestureDetector swipes;
 
@@ -108,6 +108,22 @@ public class AgentsActivity extends Activity implements AgentWatch.Listener {
             sort = Sort.STARTED;
         }
         sortBtn.setOnClickListener(v -> showSortMenu());
+        voiceBtn = findViewById(R.id.voiceBtn);
+        voiceBtn.setOnClickListener(v -> {
+            AgentVoice voice = AgentVoice.shared(this);
+            voice.setEnabled(!voice.enabled());
+            if (voice.enabled()) voice.say("Voice on. Your agents will tell you when they finish or need you.");
+            status.setText(voice.enabled() ? "Agents speak when they finish or need you · tap a reply to hear all of it" : "Voice off · chimes and banners only");
+            render();
+        });
+        // Tap what an agent said to hear it, all of it, in the Portal's voice.
+        View.OnClickListener readReply = v -> {
+            RoomBrainClient.Agent a = selected();
+            if (a == null || a.reply.isEmpty()) return;
+            AgentVoice.shared(this).say(a.agentLabel + " said: " + AgentVoice.plain(a.reply));
+        };
+        findViewById(R.id.reply).setOnClickListener(readReply);
+        findViewById(R.id.replyLabel).setOnClickListener(readReply);
         talkBtn = findViewById(R.id.talkBtn);
         focusBtn = findViewById(R.id.focusBtn);
         voiceMeter = findViewById(R.id.voiceMeter);
@@ -407,6 +423,9 @@ public class AgentsActivity extends Activity implements AgentWatch.Listener {
         viewBtn.setText(grid ? "One at a time" : "All agents");
         viewBtn.setEnabled(!none);
         sortBtn.setText("Sort: " + sort.label);
+        boolean speaking = AgentVoice.shared(this).enabled();
+        voiceBtn.setText(speaking ? "Voice: on" : "Voice: off");
+        voiceBtn.setTextColor(getColor(speaking ? R.color.accent : R.color.muted));
         if (none && sort.filters() && !agents().isEmpty()) {
             emptyText.setText(sort == Sort.TODAY ? "Nothing active today" : sort == Sort.WORKING ? "Nothing is working right now" : "Nothing needs you");
             emptyHint.setText("Tap Sort to see every agent.");
@@ -472,7 +491,7 @@ public class AgentsActivity extends Activity implements AgentWatch.Listener {
         promptLabel.setVisibility(asked ? View.VISIBLE : View.GONE);
         prompt.setVisibility(asked ? View.VISIBLE : View.GONE);
         prompt.setText(a.prompt);
-        replyLabel.setText(a.agentLabel.toUpperCase(Locale.US) + " SAID");
+        replyLabel.setText(a.agentLabel.toUpperCase(Locale.US) + " SAID · TAP TO HEAR IT");
         boolean said = !a.reply.isEmpty();
         replyLabel.setVisibility(said ? View.VISIBLE : View.GONE);
         reply.setText(a.reply);

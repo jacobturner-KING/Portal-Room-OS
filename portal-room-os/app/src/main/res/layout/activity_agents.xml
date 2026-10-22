@@ -36,6 +36,7 @@
             android:singleLine="true"
             android:textColor="@color/muted"
             android:textSize="15sp" />
+        <Button android:id="@+id/voiceBtn" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_marginEnd="10dp" android:minWidth="120dp" android:paddingHorizontal="16dp" android:background="@drawable/button_bg" android:text="Voice: on" android:textColor="@color/accent" android:textSize="16sp" android:textAllCaps="false" />
         <Button android:id="@+id/sortBtn" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_marginEnd="10dp" android:minWidth="150dp" android:paddingHorizontal="18dp" android:background="@drawable/button_bg" android:text="Sort: Started" android:textColor="@color/text" android:textSize="16sp" android:textAllCaps="false" />
         <Button android:id="@+id/approvalsBtn" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_marginEnd="10dp" android:paddingHorizontal="18dp" android:background="@drawable/button_bg" android:text="Approve here: off" android:textColor="@color/muted" android:textSize="16sp" android:textAllCaps="false" />
         <Button android:id="@+id/viewBtn" android:layout_width="wrap_content" android:layout_height="match_parent" android:minWidth="150dp" android:paddingHorizontal="18dp" android:background="@drawable/button_bg" android:text="All agents" android:textColor="@color/text" android:textSize="16sp" android:textAllCaps="false" />

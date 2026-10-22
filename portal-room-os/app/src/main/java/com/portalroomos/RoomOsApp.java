@@ -51,6 +51,7 @@ public class RoomOsApp extends Application {
         dial = new DialServer(this);
         dial.start();
         AgentWatch.shared().start(this);
+        if (AgentVoice.shared(this).enabled()) AgentVoice.shared(this).warm();
         agentsOverlay = new AgentsOverlay(this);
         agentsOverlay.attach();
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {

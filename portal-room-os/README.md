@@ -175,8 +175,16 @@ integration, secret, and decision. Specs: `docs/PRODUCT_SPEC.md`, `docs/ARCHITEC
   three that show only some agents, each with its count: Today (what moved
   since midnight), Working, and Needs you (a permission prompt or a question
   waiting). Orders by activity move at most every 30 s, so tiles hold still to
-  be read and tapped; past 14 agents the position dots become "12 of 25". Tap the pet and it puts
-  on headphones: say what you want and tap anywhere to send. Whisper on the
+  be read and tapped; past 14 agents the position dots become "12 of 25".
+  Agents talk back in the
+  Portal's own voice (`AgentVoice`: Facebook's on-device text-to-speech engine
+  through Android's TextToSpeech, so no network and no cost): after the chime,
+  "Claude Code finished in rea" and the first sentence of what it said, or
+  "... needs you" and what it wants to run. Tap what an agent said to hear all
+  of it; "Voice" in the toolbar turns it off. It keeps quiet while a microphone
+  is open. Try it: `adb shell am broadcast -a com.portalroomos.SAY -n
+  com.portalroomos/.SayReceiver --es text "Hello"` (adb shell only). Tap the
+  pet and it puts on headphones: say what you want and tap anywhere to send. Whisper on the
   Worker writes it down and the bridge on that machine
   (`agents/portal-agent-bridge.mjs`) types it into the agent's terminal (tmux,
   iTerm2 or Terminal.app; never into a bare shell). "Approve here" holds Claude

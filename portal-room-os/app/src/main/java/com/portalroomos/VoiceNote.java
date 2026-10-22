@@ -21,6 +21,9 @@ final class VoiceNote {
     /** A spoken instruction, not a meeting; stop listening after this. */
     static final int MAX_SECONDS = 90;
 
+    /** A push-to-talk microphone is open; the agents' voice keeps quiet meanwhile. */
+    static volatile boolean listeningNow;
+
     final LevelRing levels = new LevelRing(40);
     private final ByteArrayOutputStream pcm = new ByteArrayOutputStream();
     private volatile boolean stopRequested;
@@ -52,6 +55,7 @@ final class VoiceNote {
         stopRequested = false;
         startedAtMs = System.currentTimeMillis();
         thread = new Thread(() -> capture(rec), "voice-note");
+        listeningNow = true;
         thread.start();
         return true;
     }
@@ -74,6 +78,7 @@ final class VoiceNote {
         } finally {
             try { rec.stop(); } catch (Exception ignored) {}
             rec.release();
+            listeningNow = false;
         }
     }
 

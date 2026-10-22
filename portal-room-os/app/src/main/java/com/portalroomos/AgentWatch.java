@@ -64,6 +64,7 @@ final class AgentWatch {
     private volatile RoomBrainClient local;
     private String localName = "";
     private SharedPreferences prefs;
+    private Context appContext;
     private RoomBrainClient.AgentSnapshot latest;
     private String lastError;
     private boolean started, inFlight;
@@ -89,7 +90,8 @@ final class AgentWatch {
     void start(Context context) {
         if (started) return;
         started = true;
-        prefs = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        appContext = context.getApplicationContext();
+        prefs = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String url = prefs.getString("url", "");
         String token = prefs.getString("token", "");
         if (!url.isEmpty() && !token.isEmpty()) {
@@ -297,6 +299,8 @@ final class AgentWatch {
 
     private void ping(RoomBrainClient.Agent a, AgentChime.Kind kind) {
         AgentChime.shared().play(kind);
+        // The chime first, then the agent says what happened, in the Portal's own voice.
+        if (appContext != null) AgentVoice.shared(appContext).announce(AgentVoice.pingLine(a, kind));
         for (Listener l : listeners) l.onPing(a, kind);
     }
 
